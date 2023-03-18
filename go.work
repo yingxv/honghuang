@@ -1,3 +1,9 @@
 go 1.20
 
-use ./app/todo-list-go
+use (
+	./app/flashcard
+	./app/stock
+	./app/time-mgt
+	./app/todolist
+	./app/user-center
+)
