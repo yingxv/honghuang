@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-19 17:35:26
+ * @LastEditTime: 2023-03-19 23:03:20
  * @FilePath: /honghuang/app/flashcard/main.go
  * @Description:
  *
@@ -22,12 +22,13 @@ import (
 	"syscall"
 	"time"
 
-	mid "github.com/NgeKaworu/util/middleware"
-	"github.com/NgeKaworu/util/tool"
+	"github.com/NgeKaworu/util/middleware"
+
 	"github.com/julienschmidt/httprouter"
 	"github.com/yingxv/flashcard-go/src/controller"
-	"github.com/yingxv/flashcard-go/src/db"
-	"github.com/yingxv/flashcard-go/src/middleware"
+	"github.com/yingxv/flashcard-go/src/creator"
+
+	"github.com/NgeKaworu/util/service"
 )
 
 func init() {
@@ -41,22 +42,25 @@ func main() {
 		mongo  = flag.String("m", "mongodb://localhost:27017", "mongod addr flag")
 		mdb    = flag.String("db", "to-do-list", "database name")
 		ucHost = flag.String("uc", "http://user-center-go-dev", "user center host")
+		r      = flag.String("r", "localhost:6379", "rdb addr")
 	)
 	flag.Parse()
 
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	auth := middleware.NewAuth(ucHost)
-	mongoClient := db.NewMongoClient()
-	err := mongoClient.Open(*mongo, *mdb, *dbinit)
-	validate := tool.NewValidator()
-	trans := tool.NewValidatorTranslator(validate)
+	srv := service.New(ucHost, r)
 
-	controller := controller.NewController(validate, trans, auth, mongoClient)
+	mongoInit := creator.Init
+	if *dbinit {
+		mongoInit = creator.WithoutInit
+	}
+	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
+
 	if err != nil {
 		panic(err)
 	}
+	controller := controller.NewController(srv)
 
 	router := httprouter.New()
 	//task ctrl
@@ -69,15 +73,15 @@ func main() {
 	router.PATCH("/record/random-review", controller.RecordRandomReview)
 	router.PATCH("/record/set-review-result", controller.RecordSetReviewResult)
 
-	srv := &http.Server{Handler: auth.IsLogin(mid.CORS(router)), ErrorLog: nil}
-	srv.Addr = *addr
+	hSrv := &http.Server{Handler: srv.IsLogin(middleware.CORS(router)), ErrorLog: nil}
+	hSrv.Addr = *addr
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := hSrv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	log.Println("server on http port", srv.Addr)
+	log.Println("server on http port", hSrv.Addr)
 
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
@@ -88,11 +92,11 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 			go func() {
-				_ = srv.Shutdown(ctx)
+				_ = hSrv.Shutdown(ctx)
 				cleanup <- true
 			}()
 			<-cleanup
-			mongoClient.Close()
+			srv.Destroy()
 			fmt.Println("safe exit")
 			cleanupDone <- true
 		}

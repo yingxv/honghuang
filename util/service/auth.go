@@ -2,13 +2,13 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:50
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-19 17:08:28
- * @FilePath: /honghuang/app/stock/src/app/auth_middleware.go
+ * @LastEditTime: 2023-03-19 23:05:58
+ * @FilePath: /honghuang/util/service/auth.go
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
-package app
+package service
 
 import (
 	"context"
@@ -20,10 +20,10 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func (app *App) IsLogin(next http.Handler) http.Handler {
+func (srv *Service) IsLogin(next http.Handler) http.Handler {
 	//权限验证
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		s, err := app.checkUser(r)
+		s, err := srv.checkUser(r)
 
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
@@ -39,13 +39,13 @@ func (app *App) IsLogin(next http.Handler) http.Handler {
 }
 
 // checkUser
-func (app *App) checkUser(r *http.Request) (*string, error) {
-	bear, err := app.getBearer(r)
+func (srv *Service) checkUser(r *http.Request) (*string, error) {
+	bear, err := srv.getBearer(r)
 	if err != nil {
 		return nil, err
 	}
 
-	s, err := app.rdb.Get(context.Background(), *bear).Result()
+	s, err := srv.Rdb.Get(context.Background(), *bear).Result()
 
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (app *App) checkUser(r *http.Request) (*string, error) {
 }
 
 // getBearer
-func (app *App) getBearer(r *http.Request) (*string, error) {
+func (srv *Service) getBearer(r *http.Request) (*string, error) {
 	auth := r.Header.Get("Authorization")
 	if !strings.HasPrefix(auth, "Bearer ") {
 		return nil, errors.New("unknown authorization type")
@@ -65,7 +65,7 @@ func (app *App) getBearer(r *http.Request) (*string, error) {
 }
 
 // perm mid
-func (app *App) CheckPerm(perm string) func(httprouter.Handle) httprouter.Handle {
+func (srv *Service) CheckPerm(perm string) func(httprouter.Handle) httprouter.Handle {
 	return func(next httprouter.Handle) httprouter.Handle {
 		//权限验证
 		return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
@@ -77,10 +77,10 @@ func (app *App) CheckPerm(perm string) func(httprouter.Handle) httprouter.Handle
 				EXIST    = 1
 			)
 
-			e, _ := app.rdb.Exists(context.Background(), k).Result()
+			e, _ := srv.Rdb.Exists(context.Background(), k).Result()
 
 			if e == EXIST {
-				if b, _ := app.rdb.SIsMember(context.Background(), k, perm).Result(); b {
+				if b, _ := srv.Rdb.SIsMember(context.Background(), k, perm).Result(); b {
 					next(w, r, ps)
 					return
 				}
@@ -90,7 +90,8 @@ func (app *App) CheckPerm(perm string) func(httprouter.Handle) httprouter.Handle
 
 			if e == NONEXIST {
 				client := &http.Client{}
-				req, _ := http.NewRequest("HEAD", *app.uc+"/check-perm-rpc/"+perm, nil)
+
+				req, _ := http.NewRequest("HEAD", *srv.UCHost+"/check-perm-rpc/"+perm, nil)
 				req.Header.Set("Authorization", r.Header.Get("Authorization"))
 				res, err := client.Do(req)
 

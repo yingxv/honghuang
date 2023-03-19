@@ -45,7 +45,7 @@ func (app *App) Position(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	tPosition := app.mongo.GetColl(model.TPosition)
+	tPosition := app.srv.Mongo.GetColl(model.TPosition)
 	match := bson.M{}
 
 	if code != "" {
@@ -147,13 +147,13 @@ func (app *App) PositionUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	err = app.validate.Struct(position)
+	err = app.srv.Validate.Struct(position)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
-	if res := app.mongo.
+	if res := app.srv.Mongo.
 		GetColl(model.TPosition).
 		FindOneAndUpdate(context.Background(),
 			bson.M{"_id": code},

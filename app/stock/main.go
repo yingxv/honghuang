@@ -13,11 +13,10 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/stock/src/app"
+	"github.com/NgeKaworu/stock/src/creator"
 
-	"github.com/NgeKaworu/stock/src/db"
 	"github.com/NgeKaworu/util/middleware"
-	"github.com/NgeKaworu/util/tool"
-	"github.com/go-redis/redis/v8"
+	"github.com/NgeKaworu/util/service"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/robfig/cron/v3"
@@ -42,25 +41,18 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	mongoClient := db.NewMongoClient()
-	err := mongoClient.Open(*mongo, *mdb, *dbinit)
+	srv := service.New(ucHost, r)
+
+	mongoInit := creator.Init
+	if *dbinit {
+		mongoInit = creator.WithoutInit
+	}
+	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
+
 	if err != nil {
 		panic(err)
 	}
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     *r,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	validate := tool.NewValidator()
-	trans := tool.NewValidatorTranslator(validate)
-
-	app := app.New(validate, trans, ucHost, mongoClient, rdb)
-	if err != nil {
-		panic(err)
-	}
+	app := app.New(srv)
 
 	if err != nil {
 		log.Println(err.Error())
@@ -73,7 +65,7 @@ func main() {
 	router := httprouter.New()
 
 	// 爬+计算所有年报
-	router.GET("/stockCrawlMany", app.CheckPerm("admin")(app.StockCrawlMany))
+	router.GET("/stockCrawlMany", srv.CheckPerm("admin")(app.StockCrawlMany))
 	router.GET("/stock-list", app.StockList)
 
 	router.GET("/exchange/:code", app.ExchangeList)
@@ -85,15 +77,15 @@ func main() {
 	router.GET("/position/:code", app.Position)
 	router.PATCH("/position/:code", app.PositionUpsert)
 
-	srv := &http.Server{Handler: middleware.CORS(app.IsLogin(router)), ErrorLog: nil}
-	srv.Addr = *addr
+	hSrv := &http.Server{Handler: middleware.CORS(srv.IsLogin(router)), ErrorLog: nil}
+	hSrv.Addr = *addr
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := hSrv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	log.Println("server on http port", srv.Addr)
+	log.Println("server on http port", hSrv.Addr)
 
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
@@ -104,12 +96,11 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 			go func() {
-				_ = srv.Shutdown(ctx)
+				_ = hSrv.Shutdown(ctx)
 				cleanup <- true
 			}()
 			<-cleanup
-			mongoClient.Close()
-			rdb.Close()
+			srv.Destroy()
 			c.Stop()
 			fmt.Println("safe exit")
 			cleanupDone <- true

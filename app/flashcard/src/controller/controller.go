@@ -1,32 +1,26 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:11
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 22:33:52
+ * @FilePath: /honghuang/app/flashcard/src/controller/controller.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package controller
 
-import (
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	"github.com/yingxv/flashcard-go/src/db"
-	"github.com/yingxv/flashcard-go/src/middleware"
-)
+import "github.com/NgeKaworu/util/service"
 
 // Controller 控制器
 type Controller struct {
-	validate *validator.Validate
-	trans    *ut.Translator
-	auth     *middleware.Auth
-	mongo    *db.MongoClient
+	srv *service.Service
 }
 
 // NewController 工厂方法
-func NewController(
-	validate *validator.Validate,
-	trans *ut.Translator,
-	auth *middleware.Auth,
-	mongo *db.MongoClient,
-) *Controller {
+func NewController(srv *service.Service) *Controller {
 
 	return &Controller{
-		validate,
-		trans,
-		auth,
-		mongo,
+		srv,
 	}
 }

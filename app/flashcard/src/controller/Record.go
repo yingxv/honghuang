@@ -44,9 +44,9 @@ func (c *Controller) RecordCreate(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	err = c.validate.Struct(record)
+	err = c.srv.Validate.Struct(record)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, c.trans)
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (c *Controller) RecordCreate(w http.ResponseWriter, r *http.Request, ps htt
 	record.CreateAt = &now
 	record.CooldownAt = &now
 
-	res, err := c.mongo.GetColl(model.TRecord).InsertOne(context.Background(), record)
+	res, err := c.srv.Mongo.GetColl(model.TRecord).InsertOne(context.Background(), record)
 
 	if err != nil {
 		tool.RetFail(w, err)
@@ -79,7 +79,7 @@ func (c *Controller) RecordRemove(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	ret := c.mongo.GetColl(model.TRecord).FindOneAndDelete(context.Background(), bson.M{
+	ret := c.srv.Mongo.GetColl(model.TRecord).FindOneAndDelete(context.Background(), bson.M{
 		"_id": &id,
 		"uid": &uid,
 	})
@@ -130,7 +130,7 @@ func (c *Controller) RecordUpdate(w http.ResponseWriter, r *http.Request, ps htt
 	record.CooldownAt = &now
 	record.UpdateAt = &now
 
-	ret := c.mongo.GetColl(model.TRecord).FindOneAndUpdate(context.Background(), bson.M{
+	ret := c.srv.Mongo.GetColl(model.TRecord).FindOneAndUpdate(context.Background(), bson.M{
 		"_id": record.ID,
 		"uid": &uid,
 	}, bson.M{
@@ -168,9 +168,9 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	err = c.validate.Struct(convertor)
+	err = c.srv.Validate.Struct(convertor)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, c.trans)
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
 		return
 	}
 
@@ -217,7 +217,7 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 		})
 	}
 
-	t := c.mongo.GetColl(model.TRecord)
+	t := c.srv.Mongo.GetColl(model.TRecord)
 	cursor, err := t.Find(context.Background(), filter, &opt)
 	if err != nil {
 		tool.RetFail(w, err)
@@ -268,8 +268,8 @@ func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	if err := c.validate.Struct(converter); err != nil {
-		tool.RetFailWithTrans(w, err, c.trans)
+	if err := c.srv.Validate.Struct(converter); err != nil {
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
 		return
 	}
 
@@ -277,7 +277,7 @@ func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps htt
 		"uid": uid,
 		"_id": bson.M{"$in": converter.IDs},
 	}
-	res, err := c.mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{"$set": bson.M{"inReview": true}})
+	res, err := c.srv.Mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{"$set": bson.M{"inReview": true}})
 
 	if err != nil {
 		tool.RetFail(w, err)
@@ -302,7 +302,7 @@ func (c *Controller) RecordReviewAll(w http.ResponseWriter, r *http.Request, ps 
 		},
 	}
 
-	res, err := c.mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{
+	res, err := c.srv.Mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{
 		"$set": bson.M{
 			"inReview": true,
 		},
@@ -342,7 +342,7 @@ func (c *Controller) RecordRandomReview(w http.ResponseWriter, r *http.Request, 
 		}
 	}
 
-	t := c.mongo.GetColl(model.TRecord)
+	t := c.srv.Mongo.GetColl(model.TRecord)
 
 	if converter.Num == nil {
 		num := 3
@@ -431,13 +431,13 @@ func (c *Controller) RecordSetReviewResult(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := c.validate.Struct(record); err != nil {
-		tool.RetFailWithTrans(w, err, c.trans)
+	if err := c.srv.Validate.Struct(record); err != nil {
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
 		return
 	}
 	now := time.Now()
 	record.ReviewAt = &now
-	ret := c.mongo.GetColl(model.TRecord).FindOneAndUpdate(context.Background(), bson.M{
+	ret := c.srv.Mongo.GetColl(model.TRecord).FindOneAndUpdate(context.Background(), bson.M{
 		"_id": record.ID,
 		"uid": uid,
 	}, bson.M{

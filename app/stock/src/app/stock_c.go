@@ -42,7 +42,7 @@ func (d *App) StockCrawlManyService() (*mongo.InsertManyResult, error) {
 
 	}
 
-	t := d.mongo.GetColl(model.TStock)
+	t := d.srv.Mongo.GetColl(model.TStock)
 	_, err := t.DeleteMany(context.Background(), bson.M{
 		"createAt": &format,
 	})
@@ -81,7 +81,7 @@ func (d *App) StockList(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		},
 	}
 
-	t := d.mongo.GetColl(model.TStock)
+	t := d.srv.Mongo.GetColl(model.TStock)
 
 	c, err := t.Find(context.Background(), &query)
 	if err != nil {

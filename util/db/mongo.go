@@ -1,16 +1,26 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 19:20:49
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 22:44:50
+ * @FilePath: /honghuang/util/db/mongo.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package db
 
 import (
 	"context"
 	"time"
 
-	"github.com/yingxv/flashcard-go/src/model"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"go.mongodb.org/mongo-driver/mongo/writeconcern"
-	"go.mongodb.org/mongo-driver/x/bsonx"
 )
+
+type MongoInit = func(*mongo.Client, string)
 
 // MongoClient 非关系型数据库引擎
 type MongoClient struct {
@@ -24,7 +34,7 @@ func NewMongoClient() *MongoClient {
 }
 
 // Open 开启连接池x
-func (d *MongoClient) Open(mg, mdb string, initdb bool) error {
+func (d *MongoClient) Open(mg, mdb string, mongoInit MongoInit) error {
 	d.Mdb = mdb
 	ops := options.Client().ApplyURI(mg)
 	p := uint64(39000)
@@ -46,36 +56,20 @@ func (d *MongoClient) Open(mg, mdb string, initdb bool) error {
 	}
 
 	d.MgEngine = db
+	var session *mongo.Client
+	session, err = mongo.NewClient(ops)
+	if err != nil {
+		panic(err)
+	}
+
+	err = session.Connect(context.Background())
+	if err != nil {
+		panic(err)
+	}
+	defer session.Disconnect(context.Background())
 
 	//初始化数据库
-	if initdb {
-		var session *mongo.Client
-		session, err = mongo.NewClient(ops)
-		if err != nil {
-			panic(err)
-		}
-		err = session.Connect(context.Background())
-		if err != nil {
-			panic(err)
-		}
-		defer session.Disconnect(context.Background())
-
-		// 记录表
-		t := session.Database(mdb).Collection(model.TRecord)
-		indexView := t.Indexes()
-		_, err := indexView.CreateMany(context.Background(), []mongo.IndexModel{
-			{Keys: bsonx.Doc{bsonx.Elem{Key: "createAt", Value: bsonx.Int32(-1)}}},
-			{Keys: bsonx.Doc{bsonx.Elem{Key: "reviewAt", Value: bsonx.Int32(-1)}}},
-			{Keys: bsonx.Doc{bsonx.Elem{Key: "cooldownAt", Value: bsonx.Int32(-1)}}},
-			{Keys: bsonx.Doc{bsonx.Elem{Key: "inReview", Value: bsonx.Int32(1)}}},
-			{Keys: bsonx.Doc{bsonx.Elem{Key: "exp", Value: bsonx.Int32(1)}}},
-		})
-
-		if err != nil {
-			panic(err)
-		}
-
-	}
+	mongoInit(session, mdb)
 
 	return nil
 }

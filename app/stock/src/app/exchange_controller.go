@@ -2,8 +2,8 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-01-30 18:05:33
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-02-26 15:22:31
- * @FilePath: /stock/stock-go/src/app/exchange_controller.go
+ * @LastEditTime: 2023-03-19 22:51:29
+ * @FilePath: /honghuang/app/stock/src/app/exchange_controller.go
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
@@ -50,7 +50,7 @@ func (app *App) ExchangeList(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	tExchange := app.mongo.GetColl(model.TExchange)
+	tExchange := app.srv.Mongo.GetColl(model.TExchange)
 
 	filter := bson.M{
 		"code": code,
@@ -109,13 +109,13 @@ func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	err = app.validate.Struct(exchange)
+	err = app.srv.Validate.Struct(exchange)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
-	tPosition := app.mongo.GetColl(model.TPosition)
+	tPosition := app.srv.Mongo.GetColl(model.TPosition)
 	pos := new(model.Position)
 
 	if err := tPosition.FindOne(context.Background(), bson.M{"_id": exchange.Code}).Decode(&pos); err != nil {
@@ -137,7 +137,7 @@ func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 
 	isEdit := id != ""
 
-	tExchange := app.mongo.GetColl(model.TExchange)
+	tExchange := app.srv.Mongo.GetColl(model.TExchange)
 
 	if !isEdit {
 		log.Println("creat exchange")
@@ -199,7 +199,7 @@ func (app *App) ExchangeDelete(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	tExchange := app.mongo.GetColl(model.TExchange)
+	tExchange := app.srv.Mongo.GetColl(model.TExchange)
 	exchange := new(model.Exchange)
 
 	err = tExchange.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&exchange)
@@ -208,7 +208,7 @@ func (app *App) ExchangeDelete(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	tPosition := app.mongo.GetColl(model.TPosition)
+	tPosition := app.srv.Mongo.GetColl(model.TPosition)
 	pos := new(model.Position)
 
 	if err := tPosition.FindOne(context.Background(), bson.M{"_id": exchange.Code}).Decode(&pos); err != nil {
