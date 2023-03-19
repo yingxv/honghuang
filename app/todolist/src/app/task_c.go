@@ -51,7 +51,7 @@ func (d *App) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 
-	t := d.mongo.GetColl(models.TTask)
+	t := d.srv.Mongo.GetColl(models.TTask)
 
 	p["uid"] = uid
 	p["createAt"] = time.Now().Local()
@@ -99,7 +99,7 @@ func (d *App) SetTask(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 
-	t := d.mongo.GetColl(models.TTask)
+	t := d.srv.Mongo.GetColl(models.TTask)
 
 	p["uid"] = uid
 	p["updateAt"] = time.Now().Local()
@@ -132,7 +132,7 @@ func (d *App) RemoveTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	t := d.mongo.GetColl(models.TTask)
+	t := d.srv.Mongo.GetColl(models.TTask)
 
 	res := t.FindOneAndDelete(context.Background(), bson.M{"_id": id, "uid": uid})
 
@@ -161,7 +161,7 @@ func (d *App) ListTask(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	done, _ := strconv.ParseBool(q.Get("done"))
 
-	t := d.mongo.GetColl(models.TTask)
+	t := d.srv.Mongo.GetColl(models.TTask)
 
 	cur, err := t.Find(context.Background(), bson.M{
 		"uid":  uid,

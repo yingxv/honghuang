@@ -1,27 +1,28 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:23
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 23:13:35
+ * @FilePath: /honghuang/app/todolist/src/app/app.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package app
 
-import (
-	"github.com/NgeKaworu/to-do-list-go/src/db"
-	"github.com/go-redis/redis/v8"
-)
+import "github.com/NgeKaworu/util/service"
 
 // App
 type App struct {
-	uc    *string
-	mongo *db.MongoClient
-	rdb   *redis.Client
+	srv *service.Service
 }
 
 // New 工厂方法
 func New(
-	uc *string,
-	mongo *db.MongoClient,
-	rdb *redis.Client,
+	srv *service.Service,
 ) *App {
 
 	return &App{
-		uc,
-		mongo,
-		rdb,
+		srv,
 	}
 }

@@ -51,7 +51,7 @@ func (d *App) AddRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	t := d.mongo.GetColl(models.TRecord)
+	t := d.srv.Mongo.GetColl(models.TRecord)
 	var deration time.Duration
 
 	last := t.FindOne(context.Background(), bson.M{"uid": uid}, options.FindOne().SetSort(bson.M{"createAt": -1}))
@@ -112,7 +112,7 @@ func (d *App) SetRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	t := d.mongo.GetColl(models.TRecord)
+	t := d.srv.Mongo.GetColl(models.TRecord)
 	p["uid"] = uid
 	p["updateAt"] = time.Now().Local()
 
@@ -144,7 +144,7 @@ func (d *App) RemoveRecord(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	t := d.mongo.GetColl(models.TRecord)
+	t := d.srv.Mongo.GetColl(models.TRecord)
 
 	res := t.FindOneAndDelete(context.Background(), bson.M{"_id": id, "uid": uid})
 
@@ -171,7 +171,7 @@ func (d *App) ListRecord(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	limit, _ := strconv.ParseInt(l, 10, 64)
 	skip, _ := strconv.ParseInt(s, 10, 64)
 
-	t := d.mongo.GetColl(models.TRecord)
+	t := d.srv.Mongo.GetColl(models.TRecord)
 
 	total, err := t.CountDocuments(context.Background(), bson.M{
 		"uid": uid,
@@ -270,7 +270,7 @@ func (d *App) StatisticRecord(w http.ResponseWriter, r *http.Request, ps httprou
 		}},
 	)
 
-	t := d.mongo.GetColl(models.TRecord)
+	t := d.srv.Mongo.GetColl(models.TRecord)
 	cur, err := t.Aggregate(context.Background(), pipe)
 
 	if err != nil {

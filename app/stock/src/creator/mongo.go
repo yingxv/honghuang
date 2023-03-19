@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2020-11-14 11:06:01
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-19 22:45:31
+ * @LastEditTime: 2023-03-19 23:09:12
  * @FilePath: /honghuang/app/stock/src/creator/mongo.go
  * @Description:
  *
@@ -19,7 +19,8 @@ import (
 	"go.mongodb.org/mongo-driver/x/bsonx"
 )
 
-func Init(session *mongo.Client, mdb string) { // 每股数据
+func Init(session *mongo.Client, mdb string) {
+	// 每股数据
 	stock := session.Database(mdb).Collection(model.TStock)
 	indexes := stock.Indexes()
 	// undo 刷索引

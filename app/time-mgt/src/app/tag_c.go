@@ -54,7 +54,7 @@ func (d *App) AddTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		return
 	}
 
-	t := d.mongo.GetColl(models.TTag)
+	t := d.srv.Mongo.GetColl(models.TTag)
 	p["uid"] = uid
 	p["createAt"] = time.Now().Local()
 
@@ -106,7 +106,7 @@ func (d *App) SetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		return
 	}
 
-	t := d.mongo.GetColl(models.TTag)
+	t := d.srv.Mongo.GetColl(models.TTag)
 	p["uid"] = uid
 	p["updateAt"] = time.Now().Local()
 
@@ -138,7 +138,7 @@ func (d *App) RemoveTag(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	t := d.mongo.GetColl(models.TRecord)
+	t := d.srv.Mongo.GetColl(models.TRecord)
 
 	used, err := t.CountDocuments(context.Background(), bson.M{
 		"uid": uid,
@@ -155,7 +155,7 @@ func (d *App) RemoveTag(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		return
 	}
 
-	t = d.mongo.GetColl(models.TTag)
+	t = d.srv.Mongo.GetColl(models.TTag)
 
 	res := t.FindOneAndDelete(context.Background(), bson.M{"_id": id, "uid": uid})
 
@@ -182,7 +182,7 @@ func (d *App) ListTag(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	limit, _ := strconv.ParseInt(l, 10, 64)
 	skip, _ := strconv.ParseInt(s, 10, 64)
 
-	t := d.mongo.GetColl(models.TTag)
+	t := d.srv.Mongo.GetColl(models.TTag)
 
 	cur, err := t.Find(context.Background(), bson.M{
 		"uid": uid,

@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/time-mgt-go/src/app"
-	"github.com/NgeKaworu/time-mgt-go/src/db"
+	"github.com/NgeKaworu/time-mgt-go/src/creator"
 	"github.com/NgeKaworu/util/middleware"
-	"github.com/go-redis/redis/v8"
+	"github.com/NgeKaworu/util/service"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -36,22 +36,21 @@ func main() {
 
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	srv := service.New(ucHost, r)
 
-	mongoClient := db.NewMongoClient()
-	err := mongoClient.Open(*mongo, *mdb, *dbinit)
+	mongoInit := creator.Init
+	if *dbinit {
+		mongoInit = creator.WithoutInit
+	}
+	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
+
 	if err != nil {
 		panic(err)
 	}
+	app := app.New(srv)
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     *r,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	app := app.New(ucHost, mongoClient, rdb)
 	if err != nil {
-		panic(err)
+		log.Println(err.Error())
 	}
 
 	router := httprouter.New()
@@ -67,15 +66,15 @@ func main() {
 	router.DELETE("/v1/record/:id", app.RemoveRecord)
 	router.POST("/v1/record/statistic", app.StatisticRecord)
 
-	srv := &http.Server{Handler: app.IsLogin(middleware.CORS(router)), ErrorLog: nil}
-	srv.Addr = *addr
+	hSrv := &http.Server{Handler: srv.IsLogin(middleware.CORS(router)), ErrorLog: nil}
+	hSrv.Addr = *addr
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := hSrv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	log.Println("server on http port", srv.Addr)
+	log.Println("server on http port", hSrv.Addr)
 
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
@@ -86,12 +85,11 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 			go func() {
-				_ = srv.Shutdown(ctx)
+				_ = hSrv.Shutdown(ctx)
 				cleanup <- true
 			}()
 			<-cleanup
-			mongoClient.Close()
-			rdb.Close()
+			srv.Destroy()
 			fmt.Println("safe exit")
 			cleanupDone <- true
 		}
