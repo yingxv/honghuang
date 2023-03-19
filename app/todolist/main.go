@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 02:57:10
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-19 18:23:11
+ * @LastEditTime: 2023-03-19 23:16:17
  * @FilePath: /honghuang/app/todolist/main.go
  * @Description:
  *
@@ -23,9 +23,9 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/to-do-list-go/src/app"
-	"github.com/NgeKaworu/to-do-list-go/src/db"
+	"github.com/NgeKaworu/to-do-list-go/src/creator"
 	"github.com/NgeKaworu/util/middleware"
-	"github.com/go-redis/redis/v8"
+	"github.com/NgeKaworu/util/service"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -47,21 +47,21 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	mongoClient := db.NewMongoClient()
-	err := mongoClient.Open(*mongo, *mdb, *dbinit)
+	srv := service.New(ucHost, r)
+
+	mongoInit := creator.Init
+	if *dbinit {
+		mongoInit = creator.WithoutInit
+	}
+	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
+
 	if err != nil {
 		panic(err)
 	}
+	app := app.New(srv)
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     *r,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	app := app.New(ucHost, mongoClient, rdb)
 	if err != nil {
-		panic(err)
+		log.Println(err.Error())
 	}
 
 	router := httprouter.New()
@@ -71,15 +71,15 @@ func main() {
 	router.GET("/v1/task/list", app.ListTask)
 	router.DELETE("/v1/task/:id", app.RemoveTask)
 
-	srv := &http.Server{Handler: app.IsLogin(middleware.CORS(router)), ErrorLog: nil}
-	srv.Addr = *addr
+	hSrv := &http.Server{Handler: srv.IsLogin(middleware.CORS(router)), ErrorLog: nil}
+	hSrv.Addr = *addr
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := hSrv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	log.Println("server on http port", srv.Addr)
+	log.Println("server on http port", hSrv.Addr)
 
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
@@ -90,12 +90,11 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 			go func() {
-				_ = srv.Shutdown(ctx)
+				_ = hSrv.Shutdown(ctx)
 				cleanup <- true
 			}()
 			<-cleanup
-			mongoClient.Close()
-			rdb.Close()
+			srv.Destroy()
 			fmt.Println("safe exit")
 			cleanupDone <- true
 		}
