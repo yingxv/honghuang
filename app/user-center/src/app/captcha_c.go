@@ -1,3 +1,13 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:32
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 18:49:24
+ * @FilePath: /honghuang/app/user-center/src/app/captcha_c.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package app
 
 import (
@@ -7,7 +17,7 @@ import (
 	"strconv"
 
 	"github.com/NgeKaworu/user-center/src/model"
-	"github.com/NgeKaworu/user-center/src/util/responser"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
 )
@@ -15,7 +25,7 @@ import (
 func (app *App) FetchCaptcha(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	if app.getSetSessionLocked(w, r) {
-		responser.RetFail(w, errors.New("请求频繁，请60s后再试"))
+		tool.RetFail(w, errors.New("请求频繁，请60s后再试"))
 		return
 	}
 
@@ -25,13 +35,13 @@ func (app *App) FetchCaptcha(w http.ResponseWriter, r *http.Request, ps httprout
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &p)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.validate.Struct(&p)
 	if err != nil {
-		responser.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
@@ -41,7 +51,7 @@ func (app *App) FetchCaptcha(w http.ResponseWriter, r *http.Request, ps httprout
 	w.Header().Set("Cache-Control", "max-age="+strconv.FormatInt(int64(MAX_AGE), 10))
 	go app.sendCaptcha(p.Email, &captcha)
 
-	responser.RetOk(w, "验证码已经发送")
+	tool.RetOk(w, "验证码已经发送")
 
 }
 
@@ -51,18 +61,18 @@ func (app *App) CheckCaptcha(w http.ResponseWriter, r *http.Request, ps httprout
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &p)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.checkCaptcha(w, r, &p)
 
 	if err != nil {
-		responser.RetFail(w, errors.New("验证失败"))
+		tool.RetFail(w, errors.New("验证失败"))
 		return
 	}
 
-	responser.RetOk(w, "验证通过")
+	tool.RetOk(w, "验证通过")
 
 }
 

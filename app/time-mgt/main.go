@@ -14,6 +14,7 @@ import (
 
 	"github.com/NgeKaworu/time-mgt-go/src/app"
 	"github.com/NgeKaworu/time-mgt-go/src/db"
+	"github.com/NgeKaworu/util/middleware"
 	"github.com/go-redis/redis/v8"
 	"github.com/julienschmidt/httprouter"
 )
@@ -66,7 +67,7 @@ func main() {
 	router.DELETE("/v1/record/:id", app.RemoveRecord)
 	router.POST("/v1/record/statistic", app.StatisticRecord)
 
-	srv := &http.Server{Handler: app.IsLogin(router), ErrorLog: nil}
+	srv := &http.Server{Handler: app.IsLogin(middleware.CORS(router)), ErrorLog: nil}
 	srv.Addr = *addr
 
 	go func() {

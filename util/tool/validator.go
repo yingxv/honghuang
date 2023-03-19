@@ -1,14 +1,14 @@
 /*
  * @Author: fuRan NgeKaworu@gmail.com
- * @Date: 2023-02-13 13:35:31
+ * @Date: 2023-03-19 12:24:56
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-02-13 13:44:18
- * @FilePath: /stock/stock-go/src/util/validator.go
+ * @LastEditTime: 2023-03-19 12:37:12
+ * @FilePath: /honghuang/util/tool/validator.go
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
  */
-package util
+package tool
 
 import (
 	"reflect"

@@ -19,7 +19,7 @@ require (
 )
 
 require (
-	github.com/go-playground/locales v0.14.1
+	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1
 	github.com/hetiansu5/urlquery v1.2.7
 	github.com/julienschmidt/httprouter v1.3.0

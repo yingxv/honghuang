@@ -3,15 +3,14 @@ package app
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/NgeKaworu/time-mgt-go/src/models"
-	"github.com/NgeKaworu/time-mgt-go/src/parsup"
-	"github.com/NgeKaworu/time-mgt-go/src/resultor"
-	"github.com/NgeKaworu/time-mgt-go/src/utils"
+
+	"github.com/NgeKaworu/util/tool"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,33 +21,33 @@ import (
 func (d *App) AddRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		resultor.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
-	p, err := parsup.ParSup().ConvJSON(body)
+	p, err := tool.ParSup().ConvJSON(body)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	err = utils.Required(p, map[string]string{
+	err = tool.Required(p, map[string]string{
 		"tid": "请至少选一个标签",
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -70,46 +69,46 @@ func (d *App) AddRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	res, err := t.InsertOne(context.Background(), p)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	resultor.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
+	tool.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
 }
 
 // SetRecord 更新记录
 func (d *App) SetRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		resultor.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
-	p, err := parsup.ParSup().ConvJSON(body)
+	p, err := tool.ParSup().ConvJSON(body)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	err = utils.Required(p, map[string]string{
+	err = tool.Required(p, map[string]string{
 		"event": "请填写发生了什么",
 		"tid":   "请至少选一个标签",
 		"id":    "ID不能为空",
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -125,23 +124,23 @@ func (d *App) SetRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		bson.M{"$set": p},
 	)
 	if res.Err() != nil {
-		resultor.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	resultor.RetOk(w, "修改成功")
+	tool.RetOk(w, "修改成功")
 }
 
 // RemoveRecord 删除记录
 func (d *App) RemoveRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	id, err := primitive.ObjectIDFromHex(ps.ByName("id"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -150,11 +149,11 @@ func (d *App) RemoveRecord(w http.ResponseWriter, r *http.Request, ps httprouter
 	res := t.FindOneAndDelete(context.Background(), bson.M{"_id": id, "uid": uid})
 
 	if res.Err() != nil {
-		resultor.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	resultor.RetOk(w, "删除成功")
+	tool.RetOk(w, "删除成功")
 }
 
 // ListRecord record列表
@@ -165,7 +164,7 @@ func (d *App) ListRecord(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -179,7 +178,7 @@ func (d *App) ListRecord(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -188,7 +187,7 @@ func (d *App) ListRecord(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}, options.Find().SetSort(bson.M{"createAt": -1}).SetSkip(skip).SetLimit(limit))
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -196,24 +195,24 @@ func (d *App) ListRecord(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	err = cur.All(context.Background(), &list)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
-	resultor.RetOkWithTotal(w, list, total)
+	tool.RetOkWithTotal(w, list, total)
 }
 
 // StatisticRecord 统计record
 func (d *App) StatisticRecord(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -222,9 +221,9 @@ func (d *App) StatisticRecord(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 
 	if len(body) != 0 {
-		p, err := parsup.ParSup().ConvJSON(body)
+		p, err := tool.ParSup().ConvJSON(body)
 		if err != nil {
-			resultor.RetFail(w, err)
+			tool.RetFail(w, err)
 			return
 		}
 		if dateRange, ok := p["dateRange"].([]interface{}); ok {
@@ -275,15 +274,15 @@ func (d *App) StatisticRecord(w http.ResponseWriter, r *http.Request, ps httprou
 	cur, err := t.Aggregate(context.Background(), pipe)
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	record := make([]models.Record, 0)
 	err = cur.All(context.Background(), &record)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	resultor.RetOk(w, record)
+	tool.RetOk(w, record)
 }

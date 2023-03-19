@@ -1,3 +1,13 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 02:57:10
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 18:23:11
+ * @FilePath: /honghuang/app/todolist/main.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package main
 
 import (
@@ -13,8 +23,8 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/to-do-list-go/src/app"
-	"github.com/NgeKaworu/to-do-list-go/src/cors"
 	"github.com/NgeKaworu/to-do-list-go/src/db"
+	"github.com/NgeKaworu/util/middleware"
 	"github.com/go-redis/redis/v8"
 	"github.com/julienschmidt/httprouter"
 )
@@ -61,7 +71,7 @@ func main() {
 	router.GET("/v1/task/list", app.ListTask)
 	router.DELETE("/v1/task/:id", app.RemoveTask)
 
-	srv := &http.Server{Handler: app.IsLogin(cors.CORS(router)), ErrorLog: nil}
+	srv := &http.Server{Handler: app.IsLogin(middleware.CORS(router)), ErrorLog: nil}
 	srv.Addr = *addr
 
 	go func() {

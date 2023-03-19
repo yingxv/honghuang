@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/stock/src/model"
-	"github.com/NgeKaworu/stock/src/util"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,10 +17,10 @@ import (
 func (d *App) StockCrawlMany(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	res, err := d.StockCrawlManyService()
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 	}
 
-	util.RetOk(w, &res)
+	tool.RetOk(w, &res)
 }
 
 func (d *App) StockCrawlManyService() (*mongo.InsertManyResult, error) {
@@ -65,12 +65,12 @@ func (d *App) StockList(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	err := json.Unmarshal([]byte(dataTime), &times)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(times) != 2 {
-		util.RetFail(w, errors.New("dataTime must a range"))
+		tool.RetFail(w, errors.New("dataTime must a range"))
 		return
 	}
 
@@ -85,7 +85,7 @@ func (d *App) StockList(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	c, err := t.Find(context.Background(), &query)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -93,9 +93,9 @@ func (d *App) StockList(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	err = c.All(context.Background(), &res)
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOkWithTotal(w, res, int64(len(res)))
+	tool.RetOkWithTotal(w, res, int64(len(res)))
 }

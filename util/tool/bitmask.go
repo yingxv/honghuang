@@ -1,4 +1,4 @@
-package bitmask
+package tool
 
 type Bits uint8
 

@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/NgeKaworu/util/tool"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
 	"github.com/yingxv/flashcard-go/src/model"
-	"github.com/yingxv/flashcard-go/src/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -20,33 +20,33 @@ import (
 func (c *Controller) RecordCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		util.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
 	record := new(model.Record)
 	err = json.Unmarshal(body, &record)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = c.validate.Struct(record)
 	if err != nil {
-		util.RetFailWithTrans(w, err, c.trans)
+		tool.RetFailWithTrans(w, err, c.trans)
 		return
 	}
 
@@ -58,24 +58,24 @@ func (c *Controller) RecordCreate(w http.ResponseWriter, r *http.Request, ps htt
 	res, err := c.mongo.GetColl(model.TRecord).InsertOne(context.Background(), record)
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOk(w, res.InsertedID)
+	tool.RetOk(w, res.InsertedID)
 
 }
 
 func (c *Controller) RecordRemove(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	id, err := primitive.ObjectIDFromHex(ps.ByName("id"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -85,30 +85,30 @@ func (c *Controller) RecordRemove(w http.ResponseWriter, r *http.Request, ps htt
 	})
 
 	if ret.Err() != nil {
-		util.RetFail(w, ret.Err())
+		tool.RetFail(w, ret.Err())
 		return
 	}
 
-	util.RetOk(w, "OK")
+	tool.RetOk(w, "OK")
 }
 
 func (c *Controller) RecordUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		util.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
@@ -117,12 +117,12 @@ func (c *Controller) RecordUpdate(w http.ResponseWriter, r *http.Request, ps htt
 	err = json.Unmarshal(body, &record)
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if record.ID == nil {
-		util.RetFail(w, errors.New("ID是必填字段"))
+		tool.RetFail(w, errors.New("ID是必填字段"))
 		return
 	}
 
@@ -138,16 +138,16 @@ func (c *Controller) RecordUpdate(w http.ResponseWriter, r *http.Request, ps htt
 	})
 
 	if ret.Err() != nil {
-		util.RetFail(w, ret.Err())
+		tool.RetFail(w, ret.Err())
 		return
 	}
 
-	util.RetOk(w, "OK")
+	tool.RetOk(w, "OK")
 }
 func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -164,13 +164,13 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 
 	err = urlquery.Unmarshal([]byte(r.URL.RawQuery), &convertor)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = c.validate.Struct(convertor)
 	if err != nil {
-		util.RetFailWithTrans(w, err, c.trans)
+		tool.RetFailWithTrans(w, err, c.trans)
 		return
 	}
 
@@ -220,7 +220,7 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 	t := c.mongo.GetColl(model.TRecord)
 	cursor, err := t.Find(context.Background(), filter, &opt)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -228,34 +228,34 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 
 	err = cursor.All(context.Background(), &res)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	count, err := t.CountDocuments(context.Background(), filter)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
-	util.RetOkWithTotal(w, res, count)
+	tool.RetOkWithTotal(w, res, count)
 }
 func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		util.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
@@ -264,12 +264,12 @@ func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps htt
 	}{}
 
 	if err := json.Unmarshal(body, &converter); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if err := c.validate.Struct(converter); err != nil {
-		util.RetFailWithTrans(w, err, c.trans)
+		tool.RetFailWithTrans(w, err, c.trans)
 		return
 	}
 
@@ -280,17 +280,17 @@ func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps htt
 	res, err := c.mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{"$set": bson.M{"inReview": true}})
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOk(w, res)
+	tool.RetOk(w, res)
 
 }
 func (c *Controller) RecordReviewAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	filter := bson.M{
@@ -308,26 +308,26 @@ func (c *Controller) RecordReviewAll(w http.ResponseWriter, r *http.Request, ps 
 		},
 	})
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOk(w, res)
+	tool.RetOk(w, res)
 
 }
 
 func (c *Controller) RecordRandomReview(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -337,7 +337,7 @@ func (c *Controller) RecordRandomReview(w http.ResponseWriter, r *http.Request, 
 
 	if len(body) != 0 {
 		if err := json.Unmarshal(body, &converter); err != nil {
-			util.RetFail(w, err)
+			tool.RetFail(w, err)
 			return
 		}
 	}
@@ -366,14 +366,14 @@ func (c *Controller) RecordRandomReview(w http.ResponseWriter, r *http.Request, 
 	})
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	random := make([]model.Record, 0)
 	err = cursor.All(context.Background(), &random)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	ids := make([]primitive.ObjectID, 0)
@@ -391,30 +391,30 @@ func (c *Controller) RecordRandomReview(w http.ResponseWriter, r *http.Request, 
 	})
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOk(w, res)
+	tool.RetOk(w, res)
 
 }
 func (c *Controller) RecordSetReviewResult(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		util.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
@@ -427,12 +427,12 @@ func (c *Controller) RecordSetReviewResult(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := json.Unmarshal(body, &record); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if err := c.validate.Struct(record); err != nil {
-		util.RetFailWithTrans(w, err, c.trans)
+		tool.RetFailWithTrans(w, err, c.trans)
 		return
 	}
 	now := time.Now()
@@ -445,10 +445,10 @@ func (c *Controller) RecordSetReviewResult(w http.ResponseWriter, r *http.Reques
 	})
 
 	if ret.Err() != nil {
-		util.RetFail(w, ret.Err())
+		tool.RetFail(w, ret.Err())
 		return
 	}
 
-	util.RetOk(w, "OK")
+	tool.RetOk(w, "OK")
 
 }

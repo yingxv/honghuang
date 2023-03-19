@@ -2,8 +2,8 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-02-04 16:03:08
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-02-13 20:57:32
- * @FilePath: /stock/stock-go/src/model/model.go
+ * @LastEditTime: 2023-03-19 18:42:28
+ * @FilePath: /honghuang/app/stock/src/model/stock.go
  * @Description:
  *
  * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
@@ -13,16 +13,15 @@ package model
 import (
 	"time"
 
-	"github.com/NgeKaworu/stock/src/bitmask"
+	"github.com/NgeKaworu/util/tool"
 
-	"github.com/NgeKaworu/stock/src/util"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var TStock = "t_stock"
 
 // Stocks 全部股票集合
-var Stocks = util.Merge(Ss50, Hs300)
+var Stocks = tool.Merge(Ss50, Hs300)
 
 // Stock 股票基本结构
 type Stock struct {
@@ -31,7 +30,7 @@ type Stock struct {
 	Bourse       *string             `json:"bourse,omitempty" bson:"bourse,omitempty"`          // 交易所名字
 	BourseCode   *string             `json:"bourseCode,omitempty" bson:"bourse_code,omitempty"` // 交易所代码
 	Enterprise   []Enterprise        `json:"-" bson:"-"`                                        // 年报
-	errorCode    bitmask.Bits        `json:"-" bson:"errorCode"`                                // 错误码
+	errorCode    tool.Bits           `json:"-" bson:"errorCode"`                                // 错误码
 	PB           float64             `json:"PB,omitempty" bson:"pb,omitempty"`                  // 市净率
 	PE           float64             `json:"PE,omitempty" bson:"pe,omitempty"`                  // 市盈率
 	PEG          float64             `json:"PEG,omitempty" bson:"peg,omitempty"`                // 市盈增长比

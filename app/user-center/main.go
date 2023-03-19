@@ -15,9 +15,11 @@ import (
 
 	"github.com/NgeKaworu/user-center/src/app"
 	mongoClient "github.com/NgeKaworu/user-center/src/db/mongo"
-	"github.com/NgeKaworu/user-center/src/middleware/cors"
+	"github.com/NgeKaworu/util/middleware"
+	"github.com/NgeKaworu/util/tool"
+
 	"github.com/NgeKaworu/user-center/src/service/auth"
-	"github.com/NgeKaworu/user-center/src/util/validator"
+
 	"github.com/go-redis/redis/v8"
 	"gopkg.in/gomail.v2"
 
@@ -55,8 +57,8 @@ func main() {
 		DB:       0,  // use default DB
 	})
 
-	validate := validator.NewValidator()
-	trans := validator.NewValidatorTranslator(validate)
+	validate := tool.NewValidator()
+	trans := tool.NewValidatorTranslator(validate)
 
 	rand.Seed(time.Now().Unix())
 	d := gomail.NewDialer("smtp.gmail.com", 587, "ngekaworu@gmail.com", *ePwd)
@@ -101,7 +103,7 @@ func main() {
 	router.GET("/captcha/fetch", app.FetchCaptcha)
 	router.GET("/captcha/check", app.CheckCaptcha)
 
-	srv := &http.Server{Handler: cors.CORS(router), ErrorLog: nil}
+	srv := &http.Server{Handler: middleware.CORS(router), ErrorLog: nil}
 	srv.Addr = *addr
 
 	go func() {

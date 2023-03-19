@@ -1,3 +1,13 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:50
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 17:08:28
+ * @FilePath: /honghuang/app/stock/src/app/auth_middleware.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package app
 
 import (
@@ -6,7 +16,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/NgeKaworu/stock/src/util"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/julienschmidt/httprouter"
 )
 
@@ -18,7 +28,7 @@ func (app *App) IsLogin(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, err)
+			tool.RetFail(w, err)
 			return
 		}
 

@@ -1,3 +1,13 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:23
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 17:12:53
+ * @FilePath: /honghuang/app/time-mgt/src/app/auth_m.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package app
 
 import (
@@ -6,7 +16,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/NgeKaworu/time-mgt-go/src/resultor"
+	"github.com/NgeKaworu/util/tool"
 )
 
 func (app *App) IsLogin(next http.Handler) http.Handler {
@@ -17,7 +27,7 @@ func (app *App) IsLogin(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			resultor.RetFail(w, err)
+			tool.RetFail(w, err)
 			return
 		}
 

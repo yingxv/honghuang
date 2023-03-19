@@ -3,15 +3,13 @@ package app
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/NgeKaworu/to-do-list-go/src/models"
-	"github.com/NgeKaworu/to-do-list-go/src/parsup"
-	"github.com/NgeKaworu/to-do-list-go/src/resultor"
-	"github.com/NgeKaworu/to-do-list-go/src/utils"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -22,34 +20,34 @@ import (
 func (d *App) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		resultor.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
-	p, err := parsup.ParSup().ConvJSON(body)
+	p, err := tool.ParSup().ConvJSON(body)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	err = utils.Required(p, map[string]string{
+	err = tool.Required(p, map[string]string{
 		"title": "请填写任务名",
 		"level": "请选一个优先级",
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -60,44 +58,44 @@ func (d *App) AddTask(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	res, err := t.InsertOne(context.Background(), p)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	resultor.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
+	tool.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
 }
 
 // SetTask 更新记录
 func (d *App) SetTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		resultor.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
-	p, err := parsup.ParSup().ConvJSON(body)
+	p, err := tool.ParSup().ConvJSON(body)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	err = utils.Required(p, map[string]string{
+	err = tool.Required(p, map[string]string{
 		"id": "ID不能为空",
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -114,23 +112,23 @@ func (d *App) SetTask(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		bson.M{"$set": p},
 	)
 	if res.Err() != nil {
-		resultor.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	resultor.RetOk(w, "修改成功")
+	tool.RetOk(w, "修改成功")
 }
 
 // RemoveTask 删除记录
 func (d *App) RemoveTask(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	id, err := primitive.ObjectIDFromHex(ps.ByName("id"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -139,11 +137,11 @@ func (d *App) RemoveTask(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	res := t.FindOneAndDelete(context.Background(), bson.M{"_id": id, "uid": uid})
 
 	if res.Err() != nil {
-		resultor.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	resultor.RetOk(w, "删除成功")
+	tool.RetOk(w, "删除成功")
 }
 
 // ListTask record列表
@@ -154,7 +152,7 @@ func (d *App) ListTask(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -174,7 +172,7 @@ func (d *App) ListTask(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	}).SetSkip(skip).SetLimit(limit))
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -182,16 +180,16 @@ func (d *App) ListTask(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	err = cur.All(context.Background(), &list)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	total, err := t.CountDocuments(context.Background(), bson.M{"uid": uid})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	resultor.RetOkWithTotal(w, list, total)
+	tool.RetOkWithTotal(w, list, total)
 }

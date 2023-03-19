@@ -1,3 +1,13 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:11
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 17:35:26
+ * @FilePath: /honghuang/app/flashcard/main.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package main
 
 import (
@@ -12,11 +22,12 @@ import (
 	"syscall"
 	"time"
 
+	mid "github.com/NgeKaworu/util/middleware"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/julienschmidt/httprouter"
 	"github.com/yingxv/flashcard-go/src/controller"
 	"github.com/yingxv/flashcard-go/src/db"
 	"github.com/yingxv/flashcard-go/src/middleware"
-	"github.com/yingxv/flashcard-go/src/util"
 )
 
 func init() {
@@ -39,8 +50,8 @@ func main() {
 	auth := middleware.NewAuth(ucHost)
 	mongoClient := db.NewMongoClient()
 	err := mongoClient.Open(*mongo, *mdb, *dbinit)
-	validate := util.NewValidator()
-	trans := util.NewValidatorTranslator(validate)
+	validate := tool.NewValidator()
+	trans := tool.NewValidatorTranslator(validate)
 
 	controller := controller.NewController(validate, trans, auth, mongoClient)
 	if err != nil {
@@ -58,7 +69,7 @@ func main() {
 	router.PATCH("/record/random-review", controller.RecordRandomReview)
 	router.PATCH("/record/set-review-result", controller.RecordSetReviewResult)
 
-	srv := &http.Server{Handler: auth.IsLogin(middleware.CORS(router)), ErrorLog: nil}
+	srv := &http.Server{Handler: auth.IsLogin(mid.CORS(router)), ErrorLog: nil}
 	srv.Addr = *addr
 
 	go func() {

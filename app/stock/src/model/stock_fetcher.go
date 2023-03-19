@@ -3,12 +3,12 @@ package model
 import (
 	"bytes"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
-	"github.com/NgeKaworu/stock/src/bitmask"
 	"github.com/NgeKaworu/stock/src/util"
+	"github.com/NgeKaworu/util/tool"
 )
 
 var BOURSE_CODE_MAP = map[string]string{
@@ -17,7 +17,7 @@ var BOURSE_CODE_MAP = map[string]string{
 }
 
 func (s *Stock) FetchCurrentInform() error {
-	s.errorCode = bitmask.Toggle(s.errorCode, util.CUR_ERR)
+	s.errorCode = tool.Toggle(s.errorCode, util.CUR_ERR)
 
 	u, err := url.Parse("https://push2.eastmoney.com/api/qt/stock/get")
 	if err != nil {
@@ -36,7 +36,7 @@ func (s *Stock) FetchCurrentInform() error {
 	}
 
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (s *Stock) FetchCurrentInform() error {
 		return err
 	}
 
-	body, err = ioutil.ReadAll(clsRes.Body)
+	body, err = io.ReadAll(clsRes.Body)
 	if err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (s *Stock) FetchCurrentInform() error {
 
 	}
 
-	s.errorCode = bitmask.Toggle(s.errorCode, util.CUR_ERR)
+	s.errorCode = tool.Toggle(s.errorCode, util.CUR_ERR)
 	return nil
 }
 
@@ -100,7 +100,7 @@ func (s *Stock) FetchEnterPrise() error {
 		"latestCount":    12,
 		"reportDateType": 0,
 	}
-	s.errorCode = bitmask.Toggle(s.errorCode, util.YEAR_ERR)
+	s.errorCode = tool.Toggle(s.errorCode, util.YEAR_ERR)
 
 	reqBody, err := json.Marshal(curIndicator)
 	if err != nil {
@@ -122,7 +122,7 @@ func (s *Stock) FetchEnterPrise() error {
 		return err
 	}
 
-	body, err := ioutil.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
 		return err
@@ -139,6 +139,6 @@ func (s *Stock) FetchEnterPrise() error {
 
 	s.Enterprise = append(s.Enterprise, result.Result.Enterprise...)
 
-	s.errorCode = bitmask.Toggle(s.errorCode, util.YEAR_ERR)
+	s.errorCode = tool.Toggle(s.errorCode, util.YEAR_ERR)
 	return nil
 }

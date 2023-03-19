@@ -4,14 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/NgeKaworu/user-center/src/model"
-	"github.com/NgeKaworu/user-center/src/util/responser"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
@@ -23,14 +23,14 @@ import (
 
 // Login 登录
 func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
@@ -43,12 +43,12 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	inputUser := new(user)
 
 	if err := json.Unmarshal(body, &inputUser); err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if err := app.validate.Struct(inputUser); err != nil {
-		responser.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	})
 
 	if res.Err() != nil {
-		responser.RetFail(w, errors.New("用户名或密码不正确"))
+		tool.RetFail(w, errors.New("用户名或密码不正确"))
 		return
 	}
 
@@ -68,18 +68,18 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	err = res.Decode(&outputUser)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	dec, err := app.auth.CFBDecrypter(*outputUser.Pwd)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if string(dec) != *inputUser.Pwd {
-		responser.RetFail(w, errors.New("用户名或密码不正确"))
+		tool.RetFail(w, errors.New("用户名或密码不正确"))
 		return
 	}
 
@@ -87,7 +87,7 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	_, err = app.rdb.Del(context.Background(), uid+":perm").Result()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -96,29 +96,29 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 // Regsiter 注册
 func (app *App) Regsiter(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
 	var u model.User
 
 	if err := json.Unmarshal(body, &u); err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.checkCaptcha(w, r, u.ToCaptcha())
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -126,7 +126,7 @@ func (app *App) Regsiter(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	res, err := app.insertOneUser(&u)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -143,14 +143,14 @@ func (app *App) Regsiter(w http.ResponseWriter, r *http.Request, ps httprouter.P
 // ForgetPwd 忘记密码
 func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 	}
 
 	var u struct {
@@ -163,7 +163,7 @@ func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.
 
 	err = json.Unmarshal(body, &u)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -174,19 +174,19 @@ func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.
 
 	err = app.checkCaptcha(w, r, &capcha)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if err := app.validate.Struct(u); err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	enc, err := app.auth.CFBEncrypter(*u.Pwd)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 	}
 
 	pwd := string(enc)
@@ -202,7 +202,7 @@ func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.
 	res := app.mongoClient.GetColl(model.TUser).FindOneAndUpdate(context.Background(), bson.M{"email": email}, updater)
 
 	if res.Err() != nil {
-		responser.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
@@ -228,7 +228,7 @@ func (app *App) cacheSign(w http.ResponseWriter, uid string) {
 	})
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -236,18 +236,18 @@ func (app *App) cacheSign(w http.ResponseWriter, uid string) {
 	cmd := app.rdb.SetEX(context.Background(), sign, uid, dur)
 
 	if cmd.Err() != nil {
-		responser.RetFail(w, cmd.Err())
+		tool.RetFail(w, cmd.Err())
 		return
 	}
 
-	responser.RetOk(w, sign)
+	tool.RetOk(w, sign)
 }
 
 // Profile 获取用户档案
 func (app *App) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	res := app.mongoClient.GetColl(model.TUser).FindOne(context.Background(), bson.M{"_id": uid}, options.FindOne().SetProjection(bson.M{
@@ -256,7 +256,7 @@ func (app *App) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	if res.Err() != nil {
 		w.WriteHeader(http.StatusUnauthorized)
-		responser.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
@@ -264,38 +264,38 @@ func (app *App) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 
 	res.Decode(&u)
 
-	responser.RetOk(w, u)
+	tool.RetOk(w, u)
 }
 
 // CreateUser 新增用户
 func (app *App) CreateUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
 	var u model.User
 	err = json.Unmarshal(body, &u)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	res, err := app.insertOneUser(&u)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	responser.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
+	tool.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
 }
 
 // RemoveUser 删除用户
@@ -303,7 +303,7 @@ func (app *App) RemoveUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	uid, err := primitive.ObjectIDFromHex(ps.ByName("uid"))
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -312,24 +312,24 @@ func (app *App) RemoveUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	})
 
 	if res.Err() != nil {
-		responser.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	responser.RetOk(w, "删除成功")
+	tool.RetOk(w, "删除成功")
 }
 
 // UpdateUser 修改用户
 func (app *App) UpdateUser(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 	}
 
 	var u model.User
@@ -337,12 +337,12 @@ func (app *App) UpdateUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	err = json.Unmarshal(body, &u)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if u.ID == nil {
-		responser.RetFail(w, errors.New("用户id不能为空"))
+		tool.RetFail(w, errors.New("用户id不能为空"))
 		return
 	}
 
@@ -350,7 +350,7 @@ func (app *App) UpdateUser(w http.ResponseWriter, r *http.Request, ps httprouter
 		enc, err := app.auth.CFBEncrypter(*u.Pwd)
 
 		if err != nil {
-			responser.RetFail(w, err)
+			tool.RetFail(w, err)
 		}
 		pwd := string(enc)
 		u.Pwd = &pwd
@@ -373,11 +373,11 @@ func (app *App) UpdateUser(w http.ResponseWriter, r *http.Request, ps httprouter
 			errMsg = "该邮箱已经被注册"
 		}
 
-		responser.RetFail(w, errors.New(errMsg))
+		tool.RetFail(w, errors.New(errMsg))
 		return
 	}
 
-	responser.RetOk(w, "操作成功")
+	tool.RetOk(w, "操作成功")
 }
 
 // UserList 查找用户
@@ -390,13 +390,13 @@ func (app *App) UserList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &p)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.validate.Struct(&p)
 	if err != nil {
-		responser.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
@@ -428,7 +428,7 @@ func (app *App) UserList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	cur, err := t.Find(context.Background(), params, opt)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -436,18 +436,18 @@ func (app *App) UserList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	err = cur.All(context.Background(), &users)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	total, err := t.CountDocuments(context.Background(), params)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	responser.RetOkWithTotal(w, users, total)
+	tool.RetOkWithTotal(w, users, total)
 }
 
 func (app *App) insertOneUser(u *model.User) (*mongo.InsertOneResult, error) {
@@ -493,27 +493,27 @@ func (app *App) UserValidateEmail(w http.ResponseWriter, r *http.Request, ps htt
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &p)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.validate.Struct(&p)
 	if err != nil {
-		responser.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
 	total, err := app.mongoClient.GetColl(model.TUser).CountDocuments(context.Background(), bson.M{"email": &p.Email})
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if total != 0 {
-		responser.RetFail(w, errors.New("该邮箱已经被注册"))
+		tool.RetFail(w, errors.New("该邮箱已经被注册"))
 		return
 	}
 
-	responser.RetOk(w, "validate key")
+	tool.RetOk(w, "validate key")
 }

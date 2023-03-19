@@ -1,4 +1,4 @@
-package parsup
+package tool
 
 import (
 	"encoding/json"

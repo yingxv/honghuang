@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/NgeKaworu/user-center/src/model"
-	"github.com/NgeKaworu/user-center/src/util/responser"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -19,27 +19,27 @@ import (
 
 // RoleCreate 新增角色
 func (app *App) RoleCreate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
 	var u model.Role
 	err = json.Unmarshal(body, &u)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if err := app.validate.Struct(u); err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	time := time.Now().Local()
@@ -55,17 +55,17 @@ func (app *App) RoleCreate(w http.ResponseWriter, r *http.Request, ps httprouter
 			errMsg = "该key已经使用"
 		}
 
-		responser.RetFail(w, errors.New(errMsg))
+		tool.RetFail(w, errors.New(errMsg))
 		return
 
 	}
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	responser.RetOk(w, res.InsertedID)
+	tool.RetOk(w, res.InsertedID)
 }
 
 // RoleRemove 删除角色
@@ -73,7 +73,7 @@ func (app *App) RoleRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 	id := ps.ByName("id")
 
 	if id == "" {
-		responser.RetFail(w, errors.New("ID不能为空"))
+		tool.RetFail(w, errors.New("ID不能为空"))
 		return
 	}
 	c, err := app.mongoClient.GetColl(model.TUser).CountDocuments(context.Background(), bson.M{
@@ -81,7 +81,7 @@ func (app *App) RoleRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 	})
 
 	if err != nil || c > 0 {
-		responser.RetFail(w, errors.New("无法删除使用中角色"))
+		tool.RetFail(w, errors.New("无法删除使用中角色"))
 		return
 	}
 
@@ -90,24 +90,24 @@ func (app *App) RoleRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 	})
 
 	if res.Err() != nil {
-		responser.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	responser.RetOk(w, "删除成功")
+	tool.RetOk(w, "删除成功")
 }
 
 // RoleUpdate 修改角色
 func (app *App) RoleUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		responser.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 	}
 
 	var u model.Role
@@ -115,17 +115,17 @@ func (app *App) RoleUpdate(w http.ResponseWriter, r *http.Request, ps httprouter
 	err = json.Unmarshal(body, &u)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if u.ID == nil {
-		responser.RetFail(w, errors.New("id不能为空"))
+		tool.RetFail(w, errors.New("id不能为空"))
 		return
 	}
 
 	if err := app.validate.Struct(u); err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -145,11 +145,11 @@ func (app *App) RoleUpdate(w http.ResponseWriter, r *http.Request, ps httprouter
 			errMsg = "该key已经使用"
 		}
 
-		responser.RetFail(w, errors.New(errMsg))
+		tool.RetFail(w, errors.New(errMsg))
 		return
 	}
 
-	responser.RetOk(w, "操作成功")
+	tool.RetOk(w, "操作成功")
 }
 
 // RoleList 查找角色
@@ -162,13 +162,13 @@ func (app *App) RoleList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &p)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.validate.Struct(&p)
 	if err != nil {
-		responser.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (app *App) RoleList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	cur, err := t.Find(context.Background(), params, opt)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -207,18 +207,18 @@ func (app *App) RoleList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	err = cur.All(context.Background(), &roles)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	total, err := t.CountDocuments(context.Background(), params)
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	responser.RetOkWithTotal(w, roles, total)
+	tool.RetOkWithTotal(w, roles, total)
 }
 
 // RoleValidateKey key 校验
@@ -229,27 +229,27 @@ func (app *App) RoleValidateKey(w http.ResponseWriter, r *http.Request, ps httpr
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &p)
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.validate.Struct(&p)
 	if err != nil {
-		responser.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
 	total, err := app.mongoClient.GetColl(model.TRole).CountDocuments(context.Background(), bson.M{"_id": p.ID})
 
 	if err != nil {
-		responser.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if total != 0 {
-		responser.RetFail(w, errors.New("key 重复"))
+		tool.RetFail(w, errors.New("key 重复"))
 		return
 	}
 
-	responser.RetOk(w, "validate key")
+	tool.RetOk(w, "validate key")
 }

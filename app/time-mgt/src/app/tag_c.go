@@ -3,16 +3,16 @@ package app
 import (
 	"context"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/NgeKaworu/time-mgt-go/src/models"
-	"github.com/NgeKaworu/time-mgt-go/src/parsup"
-	"github.com/NgeKaworu/time-mgt-go/src/resultor"
-	"github.com/NgeKaworu/time-mgt-go/src/utils"
+
+	"github.com/NgeKaworu/util/tool"
+
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -23,34 +23,34 @@ import (
 func (d *App) AddTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		resultor.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
-	p, err := parsup.ParSup().ConvJSON(body)
+	p, err := tool.ParSup().ConvJSON(body)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	err = utils.Required(p, map[string]string{
+	err = tool.Required(p, map[string]string{
 		"name":  "标签名不能为空",
 		"color": "颜色不能为空",
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -65,44 +65,44 @@ func (d *App) AddTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 			errMsg = "该标签已被创建"
 		}
 
-		resultor.RetFail(w, errors.New(errMsg))
+		tool.RetFail(w, errors.New(errMsg))
 		return
 	}
 
-	resultor.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
+	tool.RetOk(w, res.InsertedID.(primitive.ObjectID).Hex())
 }
 
 // SetTag 更新标签
 func (d *App) SetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	if len(body) == 0 {
-		resultor.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
-	p, err := parsup.ParSup().ConvJSON(body)
+	p, err := tool.ParSup().ConvJSON(body)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
-	err = utils.Required(p, map[string]string{
+	err = tool.Required(p, map[string]string{
 		"id":    "标签不能id为空",
 		"name":  "标签名不能为空",
 		"color": "颜色不能为空",
 	})
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -118,23 +118,23 @@ func (d *App) SetTag(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		bson.M{"$set": p},
 	)
 	if res.Err() != nil {
-		resultor.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	resultor.RetOk(w, "修改成功")
+	tool.RetOk(w, "修改成功")
 }
 
 // RemoveTag 删除标签
 func (d *App) RemoveTag(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 	id, err := primitive.ObjectIDFromHex(ps.ByName("id"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -146,12 +146,12 @@ func (d *App) RemoveTag(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	})
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if used != 0 {
-		resultor.RetFail(w, errors.New("不能删除正在使用的标签。"))
+		tool.RetFail(w, errors.New("不能删除正在使用的标签。"))
 		return
 	}
 
@@ -160,11 +160,11 @@ func (d *App) RemoveTag(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 	res := t.FindOneAndDelete(context.Background(), bson.M{"_id": id, "uid": uid})
 
 	if res.Err() != nil {
-		resultor.RetFail(w, res.Err())
+		tool.RetFail(w, res.Err())
 		return
 	}
 
-	resultor.RetOk(w, "删除成功")
+	tool.RetOk(w, "删除成功")
 }
 
 // ListTag tag列表
@@ -175,7 +175,7 @@ func (d *App) ListTag(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -189,7 +189,7 @@ func (d *App) ListTag(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 	}, options.Find().SetSkip(skip).SetLimit(limit))
 
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -197,8 +197,8 @@ func (d *App) ListTag(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	err = cur.All(context.Background(), &list)
 	if err != nil {
-		resultor.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
-	resultor.RetOk(w, list)
+	tool.RetOk(w, list)
 }

@@ -14,14 +14,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/NgeKaworu/stock/src/model"
-	"github.com/NgeKaworu/stock/src/util"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
 	"go.mongodb.org/mongo-driver/bson"
@@ -32,7 +32,7 @@ import (
 func (app *App) ExchangeList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	code := ps.ByName("code")
 	if code == "" {
-		util.RetFail(w, errors.New("code is null "))
+		tool.RetFail(w, errors.New("code is null "))
 		return
 	}
 
@@ -46,7 +46,7 @@ func (app *App) ExchangeList(w http.ResponseWriter, r *http.Request, ps httprout
 
 	err := urlquery.Unmarshal([]byte(r.URL.RawQuery), &query)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -66,38 +66,38 @@ func (app *App) ExchangeList(w http.ResponseWriter, r *http.Request, ps httprout
 	)
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	list := make([]model.Exchange, 0)
 
 	if err := res.All(context.Background(), &list); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	count, err := tExchange.CountDocuments(context.Background(), filter)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOkWithTotal(w, list, count)
+	tool.RetOkWithTotal(w, list, count)
 
 }
 
 func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	defer r.Body.Close()
 
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if len(body) == 0 {
-		util.RetFail(w, errors.New("not has body"))
+		tool.RetFail(w, errors.New("not has body"))
 		return
 	}
 
@@ -105,13 +105,13 @@ func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 
 	err = json.Unmarshal(body, &exchange)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	err = app.validate.Struct(exchange)
 	if err != nil {
-		util.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.trans)
 		return
 	}
 
@@ -154,7 +154,7 @@ func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 		log.Println("edit exchange")
 		oid, err := primitive.ObjectIDFromHex(id)
 		if err != nil {
-			util.RetFail(w, err)
+			tool.RetFail(w, err)
 			return
 		}
 
@@ -163,7 +163,7 @@ func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 		old := new(model.Exchange)
 		err = tExchange.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&old)
 		if err != nil {
-			util.RetFail(w, err)
+			tool.RetFail(w, err)
 			return
 		}
 
@@ -173,29 +173,29 @@ func (app *App) ExchangeUpsert(w http.ResponseWriter, r *http.Request, ps httpro
 	}
 
 	if _, err = tExchange.UpdateOne(context.Background(), bson.M{"_id": exchange.ID}, bson.M{"$set": exchange}, options.Update().SetUpsert(true)); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if _, err = tPosition.UpdateOne(context.Background(), bson.M{"_id": pos.Code}, bson.M{"$set": pos}, options.Update().SetUpsert(true)); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOk(w, "ok")
+	tool.RetOk(w, "ok")
 
 }
 
 func (app *App) ExchangeDelete(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	id := ps.ByName("id")
 	if id == "" {
-		util.RetFail(w, errors.New("id is null "))
+		tool.RetFail(w, errors.New("id is null "))
 		return
 	}
 
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -204,7 +204,7 @@ func (app *App) ExchangeDelete(w http.ResponseWriter, r *http.Request, ps httpro
 
 	err = tExchange.FindOne(context.Background(), bson.M{"_id": oid}).Decode(&exchange)
 	if err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -212,7 +212,7 @@ func (app *App) ExchangeDelete(w http.ResponseWriter, r *http.Request, ps httpro
 	pos := new(model.Position)
 
 	if err := tPosition.FindOne(context.Background(), bson.M{"_id": exchange.Code}).Decode(&pos); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
@@ -223,14 +223,14 @@ func (app *App) ExchangeDelete(w http.ResponseWriter, r *http.Request, ps httpro
 	pos.TotalDividend -= exchange.CurrentDividend
 
 	if _, err = tExchange.DeleteOne(context.Background(), bson.M{"_id": exchange.ID}); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
 	if _, err = tPosition.UpdateOne(context.Background(), bson.M{"_id": pos.Code}, bson.M{"$set": pos}, options.Update().SetUpsert(true)); err != nil {
-		util.RetFail(w, err)
+		tool.RetFail(w, err)
 		return
 	}
 
-	util.RetOk(w, "ok")
+	tool.RetOk(w, "ok")
 }

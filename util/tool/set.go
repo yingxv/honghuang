@@ -1,4 +1,14 @@
-package util
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:50
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 17:07:34
+ * @FilePath: /honghuang/util/tool/set.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
+package tool
 
 // Union 交集
 func Union(slice1, slice2 []string) []string {

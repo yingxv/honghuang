@@ -13,9 +13,10 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/stock/src/app"
-	"github.com/NgeKaworu/stock/src/cors"
+
 	"github.com/NgeKaworu/stock/src/db"
-	"github.com/NgeKaworu/stock/src/util"
+	"github.com/NgeKaworu/util/middleware"
+	"github.com/NgeKaworu/util/tool"
 	"github.com/go-redis/redis/v8"
 
 	"github.com/julienschmidt/httprouter"
@@ -53,8 +54,8 @@ func main() {
 		DB:       0,  // use default DB
 	})
 
-	validate := util.NewValidator()
-	trans := util.NewValidatorTranslator(validate)
+	validate := tool.NewValidator()
+	trans := tool.NewValidatorTranslator(validate)
 
 	app := app.New(validate, trans, ucHost, mongoClient, rdb)
 	if err != nil {
@@ -84,7 +85,7 @@ func main() {
 	router.GET("/position/:code", app.Position)
 	router.PATCH("/position/:code", app.PositionUpsert)
 
-	srv := &http.Server{Handler: cors.CORS(app.IsLogin(router)), ErrorLog: nil}
+	srv := &http.Server{Handler: middleware.CORS(app.IsLogin(router)), ErrorLog: nil}
 	srv.Addr = *addr
 
 	go func() {

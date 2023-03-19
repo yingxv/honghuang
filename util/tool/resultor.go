@@ -1,10 +1,23 @@
-package resultor
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 12:24:56
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-19 12:37:07
+ * @FilePath: /honghuang/util/tool/resultor.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
+package tool
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
 )
 
 // RetOk 成功处理器
@@ -30,6 +43,31 @@ func RetFail(w http.ResponseWriter, e error) {
 	res := map[string]interface{}{
 		"ok":     false,
 		"errMsg": errMsg,
+	}
+
+	b, err := json.Marshal(res)
+	if err != nil {
+		log.Println(errMsg)
+		log.Println(err.Error())
+		log.Printf("%+v", res)
+		return
+	}
+
+	fmt.Fprint(w, string(b))
+}
+
+// RetFail 失败处理器
+func RetFailWithTrans(w http.ResponseWriter, err error, t *ut.Translator) {
+
+	var errMsg string
+
+	for _, v := range err.(validator.ValidationErrors).Translate(*t) {
+		errMsg += v + ","
+	}
+
+	res := map[string]interface{}{
+		"ok":     false,
+		"errMsg": errMsg[0 : len(errMsg)-1],
 	}
 
 	b, err := json.Marshal(res)

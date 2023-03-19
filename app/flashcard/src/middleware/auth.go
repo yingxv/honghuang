@@ -3,10 +3,10 @@ package middleware
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 
-	"github.com/yingxv/flashcard-go/src/util"
+	"github.com/NgeKaworu/util/tool"
 )
 
 // Auth 校验相关
@@ -30,7 +30,7 @@ func (a *Auth) IsLogin(next http.Handler) http.Handler {
 			// Request Basic Authentication otherwise
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, errors.New("token is empty"))
+			tool.RetFail(w, errors.New("token is empty"))
 			return
 		}
 		url := *a.UCHost + "/isLogin"
@@ -39,7 +39,7 @@ func (a *Auth) IsLogin(next http.Handler) http.Handler {
 			// Request Basic Authentication otherwise
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, errors.New("invalidate request"))
+			tool.RetFail(w, errors.New("invalidate request"))
 			return
 		}
 
@@ -52,11 +52,11 @@ func (a *Auth) IsLogin(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, errors.New("invalidate uc reqest"))
+			tool.RetFail(w, errors.New("invalidate uc reqest"))
 			return
 		}
 
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if body != nil {
 			defer r.Body.Close()
 		}
@@ -64,7 +64,7 @@ func (a *Auth) IsLogin(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, errors.New("invalidate uc response"))
+			tool.RetFail(w, errors.New("invalidate uc response"))
 			return
 		}
 
@@ -74,7 +74,7 @@ func (a *Auth) IsLogin(next http.Handler) http.Handler {
 		if err != nil {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, errors.New("json params fail"))
+			tool.RetFail(w, errors.New("json params fail"))
 			return
 		}
 
@@ -84,7 +84,7 @@ func (a *Auth) IsLogin(next http.Handler) http.Handler {
 		} else {
 			w.Header().Set("WWW-Authenticate", "Bearer realm=Restricted")
 			w.WriteHeader(http.StatusUnauthorized)
-			util.RetFail(w, errors.New(p["errMsg"].(string)))
+			tool.RetFail(w, errors.New(p["errMsg"].(string)))
 			return
 		}
 

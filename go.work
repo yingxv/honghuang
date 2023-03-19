@@ -6,4 +6,6 @@ use (
 	./app/time-mgt
 	./app/todolist
 	./app/user-center
+	./util/middleware
+	./util/tool
 )
