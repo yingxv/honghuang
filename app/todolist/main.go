@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 02:57:10
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-19 23:16:17
+ * @LastEditTime: 2023-03-20 10:26:31
  * @FilePath: /honghuang/app/todolist/main.go
  * @Description:
  *
@@ -47,7 +47,10 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	srv := service.New(ucHost, r)
+	srv := service.New(&service.ServiceAug{
+		UCHost:    ucHost,
+		RedisAddr: r,
+	})
 
 	mongoInit := creator.Init
 	if *dbinit {

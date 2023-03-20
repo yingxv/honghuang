@@ -36,7 +36,10 @@ func main() {
 
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-	srv := service.New(ucHost, r)
+	srv := service.New(&service.ServiceAug{
+		UCHost:    ucHost,
+		RedisAddr: r,
+	})
 
 	mongoInit := creator.Init
 	if *dbinit {

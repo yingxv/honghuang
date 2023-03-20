@@ -19,7 +19,6 @@ import (
 	"github.com/NgeKaworu/util/service"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/robfig/cron/v3"
 )
 
 func init() {
@@ -41,7 +40,10 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	srv := service.New(ucHost, r)
+	srv := service.New(&service.ServiceAug{
+		UCHost:    ucHost,
+		RedisAddr: r,
+	})
 
 	mongoInit := creator.Init
 	if *dbinit {
@@ -58,10 +60,10 @@ func main() {
 		log.Println(err.Error())
 	}
 
-	c := cron.New(cron.WithParser(cron.NewParser(cron.Hour | cron.Dow)))
-	c.AddFunc("19 MON-FRI", func() { app.StockCrawlManyService() })
+	srv.Cron.AddFunc("19 MON-FRI", func() { app.StockCrawlManyService() })
 
-	go c.Start()
+	go srv.Cron.Start()
+
 	router := httprouter.New()
 
 	// 爬+计算所有年报
@@ -101,7 +103,6 @@ func main() {
 			}()
 			<-cleanup
 			srv.Destroy()
-			c.Stop()
 			fmt.Println("safe exit")
 			cleanupDone <- true
 		}
