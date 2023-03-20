@@ -26,7 +26,7 @@ func init() {
 func main() {
 	var (
 		addr   = flag.String("l", ":8050", "绑定Host地址")
-		dbinit = flag.Bool("i", false, "init database flag")
+		dbInit = flag.Bool("i", false, "init database flag")
 		mongo  = flag.String("m", "mongodb://localhost:27017", "mongod addr flag")
 		mdb    = flag.String("db", "time-mgt", "database name")
 		ucHost = flag.String("uc", "https://api.furan.xyz/user-center", "user center host")
@@ -42,7 +42,7 @@ func main() {
 	})
 
 	mongoInit := creator.Init
-	if *dbinit {
+	if *dbInit {
 		mongoInit = creator.WithoutInit
 	}
 	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)

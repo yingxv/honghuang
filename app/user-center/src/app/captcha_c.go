@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:32
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-19 18:49:24
+ * @LastEditTime: 2023-03-20 10:34:13
  * @FilePath: /honghuang/app/user-center/src/app/captcha_c.go
  * @Description:
  *
@@ -39,9 +39,9 @@ func (app *App) FetchCaptcha(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 

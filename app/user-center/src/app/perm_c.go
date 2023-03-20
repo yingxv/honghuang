@@ -39,7 +39,7 @@ func (app *App) PermCreate(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	if err := app.validate.Struct(&p); err != nil {
+	if err := app.srv.Validate.Struct(&p); err != nil {
 		tool.RetFail(w, err)
 		return
 	}
@@ -47,7 +47,7 @@ func (app *App) PermCreate(w http.ResponseWriter, r *http.Request, ps httprouter
 	tt := time.Now().Local()
 	p.CreateAt = &tt
 
-	t := app.mongoClient.GetColl(model.TPerm)
+	t := app.srv.Mongo.GetColl(model.TPerm)
 
 	res, err := t.InsertOne(context.Background(), p)
 
@@ -79,7 +79,7 @@ func (app *App) PermRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	c, err := app.mongoClient.GetColl(model.TRole).CountDocuments(context.Background(), bson.M{
+	c, err := app.srv.Mongo.GetColl(model.TRole).CountDocuments(context.Background(), bson.M{
 		"perms": id,
 	})
 
@@ -88,7 +88,7 @@ func (app *App) PermRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	t := app.mongoClient.GetColl(model.TPerm)
+	t := app.srv.Mongo.GetColl(model.TPerm)
 
 	c, err = t.CountDocuments(context.Background(), bson.M{
 		"pID": id,
@@ -143,7 +143,7 @@ func (app *App) PermUpdate(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	if err := app.validate.Struct(u); err != nil {
+	if err := app.srv.Validate.Struct(u); err != nil {
 		tool.RetFail(w, err)
 		return
 	}
@@ -155,7 +155,7 @@ func (app *App) PermUpdate(w http.ResponseWriter, r *http.Request, ps httprouter
 	if u.PID == nil {
 		updater["$unset"] = bson.M{"pID": ""}
 	}
-	res := app.mongoClient.GetColl(model.TPerm).FindOneAndUpdate(context.Background(), bson.M{"_id": *u.ID}, updater)
+	res := app.srv.Mongo.GetColl(model.TPerm).FindOneAndUpdate(context.Background(), bson.M{"_id": *u.ID}, updater)
 
 	if res.Err() != nil {
 		errMsg := res.Err().Error()
@@ -185,9 +185,9 @@ func (app *App) PermList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
@@ -215,7 +215,7 @@ func (app *App) PermList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if p.Skip != nil {
 		opt.SetSkip(*p.Skip)
 	}
-	t := app.mongoClient.GetColl(model.TPerm)
+	t := app.srv.Mongo.GetColl(model.TPerm)
 
 	cur, err := t.Find(context.Background(), params, opt)
 
@@ -254,13 +254,13 @@ func (app *App) PermValidateKey(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
-	total, err := app.mongoClient.GetColl(model.TPerm).CountDocuments(context.Background(), bson.M{"_id": *p.ID})
+	total, err := app.srv.Mongo.GetColl(model.TPerm).CountDocuments(context.Background(), bson.M{"_id": *p.ID})
 
 	if err != nil {
 		tool.RetFail(w, err)
@@ -283,7 +283,7 @@ func (app *App) Menu(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		return
 	}
 
-	cur, err := app.mongoClient.GetColl(model.TUser).Aggregate(context.Background(), []bson.M{
+	cur, err := app.srv.Mongo.GetColl(model.TUser).Aggregate(context.Background(), []bson.M{
 		{
 			"$match": bson.M{
 				"_id": uid,
@@ -326,7 +326,7 @@ func (app *App) Menu(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 
 // MicroApp 查子系统
 func (app *App) MicroApp(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	cur, err := app.mongoClient.GetColl(model.TPerm).Find(context.Background(), bson.M{
+	cur, err := app.srv.Mongo.GetColl(model.TPerm).Find(context.Background(), bson.M{
 		"isMicroApp": true,
 	})
 

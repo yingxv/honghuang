@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,14 +13,9 @@ import (
 	"time"
 
 	"github.com/NgeKaworu/user-center/src/app"
-	mongoClient "github.com/NgeKaworu/user-center/src/db/mongo"
+	"github.com/NgeKaworu/user-center/src/creator"
 	"github.com/NgeKaworu/util/middleware"
-	"github.com/NgeKaworu/util/tool"
-
-	"github.com/NgeKaworu/user-center/src/service/auth"
-
-	"github.com/go-redis/redis/v8"
-	"gopkg.in/gomail.v2"
+	"github.com/NgeKaworu/util/service"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -34,8 +28,8 @@ func main() {
 	var (
 		addr   = flag.String("l", ":8020", "绑定Host地址")
 		dbInit = flag.Bool("i", true, "init database flag")
-		m      = flag.String("m", "mongodb://localhost:27017", "mongod addr flag")
-		db     = flag.String("db", "uc", "database name")
+		mongo  = flag.String("m", "mongodb://localhost:27017", "mongod addr flag")
+		mdb    = flag.String("db", "uc", "database name")
 		k      = flag.String("k", "f3fa39nui89Wi707", "iv key")
 		r      = flag.String("r", "localhost:6379", "rdb addr")
 		ePwd   = flag.String("d", "", "email pwd")
@@ -45,26 +39,26 @@ func main() {
 	log.SetOutput(os.Stdout)
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	mongoClient := mongoClient.New()
-	err := mongoClient.Open(*m, *db, *dbInit)
+	srv := service.New(&service.ServiceAug{
+		RedisAddr: r,
+		CipherKey: k,
+		DialerPwd: ePwd,
+	})
+
+	mongoInit := creator.Init
+	if *dbInit {
+		mongoInit = creator.WithoutInit
+	}
+	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
+
+	if err != nil {
+		panic(err)
+	}
+	app := app.New(srv)
+
 	if err != nil {
 		log.Println(err.Error())
 	}
-
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     *r,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	validate := tool.NewValidator()
-	trans := tool.NewValidatorTranslator(validate)
-
-	rand.Seed(time.Now().Unix())
-	d := gomail.NewDialer("smtp.gmail.com", 587, "ngekaworu@gmail.com", *ePwd)
-
-	auth := auth.New(*k)
-	app := app.New(mongoClient, rdb, validate, trans, auth, d)
 
 	router := httprouter.New()
 	// user ctrl
@@ -103,15 +97,15 @@ func main() {
 	router.GET("/captcha/fetch", app.FetchCaptcha)
 	router.GET("/captcha/check", app.CheckCaptcha)
 
-	srv := &http.Server{Handler: middleware.CORS(router), ErrorLog: nil}
-	srv.Addr = *addr
+	hSrv := &http.Server{Handler: middleware.CORS(router), ErrorLog: nil}
+	hSrv.Addr = *addr
 
 	go func() {
-		if err := srv.ListenAndServe(); err != nil {
+		if err := hSrv.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
-	log.Println("server on http port", srv.Addr)
+	log.Println("server on http port", hSrv.Addr)
 
 	signalChan := make(chan os.Signal, 1)
 	cleanupDone := make(chan bool)
@@ -122,12 +116,12 @@ func main() {
 			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 			defer cancel()
 			go func() {
-				_ = srv.Shutdown(ctx)
+				_ = hSrv.Shutdown(ctx)
 				cleanup <- true
 			}()
 			<-cleanup
-			mongoClient.Close()
-			rdb.Close()
+
+			srv.Destroy()
 
 			fmt.Println("safe exit")
 			cleanupDone <- true

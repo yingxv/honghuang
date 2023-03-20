@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 02:57:10
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-20 10:26:31
+ * @LastEditTime: 2023-03-20 10:30:46
  * @FilePath: /honghuang/app/todolist/main.go
  * @Description:
  *
@@ -36,7 +36,7 @@ func init() {
 func main() {
 	var (
 		addr   = flag.String("l", ":8040", "绑定Host地址")
-		dbinit = flag.Bool("i", false, "init database flag")
+		dbInit = flag.Bool("i", false, "init database flag")
 		mongo  = flag.String("m", "mongodb://localhost:27017", "mongod addr flag")
 		mdb    = flag.String("db", "to-do-list", "database name")
 		ucHost = flag.String("uc", "http://user-center-go", "user center host")
@@ -53,7 +53,7 @@ func main() {
 	})
 
 	mongoInit := creator.Init
-	if *dbinit {
+	if *dbInit {
 		mongoInit = creator.WithoutInit
 	}
 	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)

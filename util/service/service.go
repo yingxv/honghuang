@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 19:52:43
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-20 10:26:59
+ * @LastEditTime: 2023-03-20 10:34:49
  * @FilePath: /honghuang/util/service/service.go
  * @Description:
  *

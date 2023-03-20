@@ -38,14 +38,14 @@ func (app *App) RoleCreate(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	if err := app.validate.Struct(u); err != nil {
+	if err := app.srv.Validate.Struct(u); err != nil {
 		tool.RetFail(w, err)
 		return
 	}
 	time := time.Now().Local()
 	u.CreateAt = &time
 
-	t := app.mongoClient.GetColl(model.TRole)
+	t := app.srv.Mongo.GetColl(model.TRole)
 
 	res, err := t.InsertOne(context.Background(), u)
 
@@ -76,7 +76,7 @@ func (app *App) RoleRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 		tool.RetFail(w, errors.New("ID不能为空"))
 		return
 	}
-	c, err := app.mongoClient.GetColl(model.TUser).CountDocuments(context.Background(), bson.M{
+	c, err := app.srv.Mongo.GetColl(model.TUser).CountDocuments(context.Background(), bson.M{
 		"roles": id,
 	})
 
@@ -85,7 +85,7 @@ func (app *App) RoleRemove(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	res := app.mongoClient.GetColl(model.TRole).FindOneAndDelete(context.Background(), bson.M{
+	res := app.srv.Mongo.GetColl(model.TRole).FindOneAndDelete(context.Background(), bson.M{
 		"_id": id,
 	})
 
@@ -124,7 +124,7 @@ func (app *App) RoleUpdate(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	if err := app.validate.Struct(u); err != nil {
+	if err := app.srv.Validate.Struct(u); err != nil {
 		tool.RetFail(w, err)
 		return
 	}
@@ -137,7 +137,7 @@ func (app *App) RoleUpdate(w http.ResponseWriter, r *http.Request, ps httprouter
 		updater["$unset"] = bson.M{"perms": ""}
 	}
 
-	res := app.mongoClient.GetColl(model.TRole).FindOneAndUpdate(context.Background(), bson.M{"_id": *u.ID}, updater)
+	res := app.srv.Mongo.GetColl(model.TRole).FindOneAndUpdate(context.Background(), bson.M{"_id": *u.ID}, updater)
 
 	if res.Err() != nil {
 		errMsg := res.Err().Error()
@@ -166,9 +166,9 @@ func (app *App) RoleList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
@@ -194,7 +194,7 @@ func (app *App) RoleList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if p.Skip != nil {
 		opt.SetSkip(*p.Skip)
 	}
-	t := app.mongoClient.GetColl(model.TRole)
+	t := app.srv.Mongo.GetColl(model.TRole)
 
 	cur, err := t.Find(context.Background(), params, opt)
 
@@ -233,13 +233,13 @@ func (app *App) RoleValidateKey(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
-	total, err := app.mongoClient.GetColl(model.TRole).CountDocuments(context.Background(), bson.M{"_id": p.ID})
+	total, err := app.srv.Mongo.GetColl(model.TRole).CountDocuments(context.Background(), bson.M{"_id": p.ID})
 
 	if err != nil {
 		tool.RetFail(w, err)

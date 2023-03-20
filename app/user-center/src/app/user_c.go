@@ -47,12 +47,12 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 
-	if err := app.validate.Struct(inputUser); err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+	if err := app.srv.Validate.Struct(inputUser); err != nil {
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
-	t := app.mongoClient.GetColl(model.TUser)
+	t := app.srv.Mongo.GetColl(model.TUser)
 
 	email := strings.ToLower(strings.Replace(*inputUser.Email, " ", "", -1))
 	res := t.FindOne(context.Background(), bson.M{
@@ -72,7 +72,7 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 		return
 	}
 
-	dec, err := app.auth.CFBDecrypter(*outputUser.Pwd)
+	dec, err := app.srv.Key.CFBDecrypter(*outputUser.Pwd)
 	if err != nil {
 		tool.RetFail(w, err)
 		return
@@ -85,7 +85,7 @@ func (app *App) Login(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 
 	uid := outputUser.ID.Hex()
 
-	_, err = app.rdb.Del(context.Background(), uid+":perm").Result()
+	_, err = app.srv.Rdb.Del(context.Background(), uid+":perm").Result()
 	if err != nil {
 		tool.RetFail(w, err)
 		return
@@ -178,12 +178,12 @@ func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
-	if err := app.validate.Struct(u); err != nil {
+	if err := app.srv.Validate.Struct(u); err != nil {
 		tool.RetFail(w, err)
 		return
 	}
 
-	enc, err := app.auth.CFBEncrypter(*u.Pwd)
+	enc, err := app.srv.Key.CFBEncrypter(*u.Pwd)
 
 	if err != nil {
 		tool.RetFail(w, err)
@@ -199,7 +199,7 @@ func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.
 	updateAt := time.Now().Local()
 	u.UpdateAt = &updateAt
 
-	res := app.mongoClient.GetColl(model.TUser).FindOneAndUpdate(context.Background(), bson.M{"email": email}, updater)
+	res := app.srv.Mongo.GetColl(model.TUser).FindOneAndUpdate(context.Background(), bson.M{"email": email}, updater)
 
 	if res.Err() != nil {
 		tool.RetFail(w, res.Err())
@@ -221,7 +221,7 @@ func (app *App) ForgetPwd(w http.ResponseWriter, r *http.Request, ps httprouter.
 func (app *App) cacheSign(w http.ResponseWriter, uid string) {
 	dur := time.Hour * 24 * 15
 	exp := time.Now().Add(dur).Unix()
-	tk, err := app.auth.GenJWT(&jwt.StandardClaims{
+	tk, err := app.srv.Key.GenJWT(&jwt.StandardClaims{
 		ExpiresAt: exp,
 		Issuer:    "fuRan",
 		Audience:  uid,
@@ -233,7 +233,7 @@ func (app *App) cacheSign(w http.ResponseWriter, uid string) {
 	}
 
 	sign := strings.Split(tk, ".")[2]
-	cmd := app.rdb.SetEX(context.Background(), sign, uid, dur)
+	cmd := app.srv.Rdb.SetEX(context.Background(), sign, uid, dur)
 
 	if cmd.Err() != nil {
 		tool.RetFail(w, cmd.Err())
@@ -250,7 +250,7 @@ func (app *App) Profile(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 		tool.RetFail(w, err)
 		return
 	}
-	res := app.mongoClient.GetColl(model.TUser).FindOne(context.Background(), bson.M{"_id": uid}, options.FindOne().SetProjection(bson.M{
+	res := app.srv.Mongo.GetColl(model.TUser).FindOne(context.Background(), bson.M{"_id": uid}, options.FindOne().SetProjection(bson.M{
 		"pwd": 0,
 	}))
 
@@ -307,7 +307,7 @@ func (app *App) RemoveUser(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
-	res := app.mongoClient.GetColl(model.TUser).FindOneAndDelete(context.Background(), bson.M{
+	res := app.srv.Mongo.GetColl(model.TUser).FindOneAndDelete(context.Background(), bson.M{
 		"_id": uid,
 	})
 
@@ -347,7 +347,7 @@ func (app *App) UpdateUser(w http.ResponseWriter, r *http.Request, ps httprouter
 	}
 
 	if u.Pwd != nil {
-		enc, err := app.auth.CFBEncrypter(*u.Pwd)
+		enc, err := app.srv.Key.CFBEncrypter(*u.Pwd)
 
 		if err != nil {
 			tool.RetFail(w, err)
@@ -365,7 +365,7 @@ func (app *App) UpdateUser(w http.ResponseWriter, r *http.Request, ps httprouter
 		updater["$unset"] = bson.M{"roles": ""}
 	}
 
-	res := app.mongoClient.GetColl(model.TUser).FindOneAndUpdate(context.Background(), bson.M{"_id": *u.ID}, updater)
+	res := app.srv.Mongo.GetColl(model.TUser).FindOneAndUpdate(context.Background(), bson.M{"_id": *u.ID}, updater)
 
 	if res.Err() != nil {
 		errMsg := res.Err().Error()
@@ -394,9 +394,9 @@ func (app *App) UserList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
@@ -423,7 +423,7 @@ func (app *App) UserList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	if p.Skip != nil {
 		opt.SetSkip(*p.Skip)
 	}
-	t := app.mongoClient.GetColl(model.TUser)
+	t := app.srv.Mongo.GetColl(model.TUser)
 
 	cur, err := t.Find(context.Background(), params, opt)
 
@@ -452,11 +452,11 @@ func (app *App) UserList(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 func (app *App) insertOneUser(u *model.User) (*mongo.InsertOneResult, error) {
 
-	if err := app.validate.Struct(u); err != nil {
+	if err := app.srv.Validate.Struct(u); err != nil {
 		return nil, err
 	}
 
-	enc, err := app.auth.CFBEncrypter(*u.Pwd)
+	enc, err := app.srv.Key.CFBEncrypter(*u.Pwd)
 
 	email := strings.ToLower(strings.Replace(*u.Email, " ", "", -1))
 	pwd := string(enc)
@@ -469,7 +469,7 @@ func (app *App) insertOneUser(u *model.User) (*mongo.InsertOneResult, error) {
 	u.Pwd = &pwd
 	u.CreateAt = &now
 
-	t := app.mongoClient.GetColl(model.TUser)
+	t := app.srv.Mongo.GetColl(model.TUser)
 
 	res, err := t.InsertOne(context.Background(), u)
 
@@ -497,13 +497,13 @@ func (app *App) UserValidateEmail(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	err = app.validate.Struct(&p)
+	err = app.srv.Validate.Struct(&p)
 	if err != nil {
-		tool.RetFailWithTrans(w, err, app.trans)
+		tool.RetFailWithTrans(w, err, app.srv.Trans)
 		return
 	}
 
-	total, err := app.mongoClient.GetColl(model.TUser).CountDocuments(context.Background(), bson.M{"email": &p.Email})
+	total, err := app.srv.Mongo.GetColl(model.TUser).CountDocuments(context.Background(), bson.M{"email": &p.Email})
 
 	if err != nil {
 		tool.RetFail(w, err)

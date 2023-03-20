@@ -1,37 +1,28 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:23
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-03-20 10:32:42
+ * @FilePath: /honghuang/app/user-center/src/app/app.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package app
 
-import (
-	mongoClient "github.com/NgeKaworu/user-center/src/db/mongo"
-	"github.com/NgeKaworu/user-center/src/service/auth"
-	ut "github.com/go-playground/universal-translator"
-	"github.com/go-playground/validator/v10"
-	"github.com/go-redis/redis/v8"
-	"gopkg.in/gomail.v2"
-)
+import "github.com/NgeKaworu/util/service"
 
+// App
 type App struct {
-	mongoClient *mongoClient.MongoClient
-	rdb         *redis.Client
-	validate    *validator.Validate
-	trans       *ut.Translator
-	auth        *auth.Auth
-	d           *gomail.Dialer
+	srv *service.Service
 }
 
+// New 工厂方法
 func New(
-	mongoClient *mongoClient.MongoClient,
-	rdb *redis.Client,
-	validate *validator.Validate,
-	trans *ut.Translator,
-	auth *auth.Auth,
-	d *gomail.Dialer,
+	srv *service.Service,
 ) *App {
+
 	return &App{
-		mongoClient,
-		rdb,
-		validate,
-		trans,
-		auth,
-		d,
+		srv,
 	}
 }

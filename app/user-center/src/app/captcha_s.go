@@ -26,7 +26,7 @@ func (app *App) sendCaptcha(mail, captcha *string) {
 	m.SetHeader("Subject", "验证码")
 	m.SetBody("text/html", "你的验证码是："+*captcha+", 10分钟内有效")
 
-	if err := app.d.DialAndSend(m); err != nil {
+	if err := app.srv.Dialer.DialAndSend(m); err != nil {
 		panic(err)
 	}
 
@@ -34,7 +34,7 @@ func (app *App) sendCaptcha(mail, captcha *string) {
 
 func (app *App) getCacheCaptcha(key *string) (string, error) {
 
-	cmd := app.rdb.Get(context.Background(), *key)
+	cmd := app.srv.Rdb.Get(context.Background(), *key)
 	if cmd.Err() != nil {
 		return "", cmd.Err()
 	}
@@ -45,7 +45,7 @@ func (app *App) getCacheCaptcha(key *string) (string, error) {
 
 func (app *App) setRedisCaptcha(email, captcha *string) error {
 
-	cmd := app.rdb.Set(context.Background(), *email, *captcha, time.Duration(CAPTCHA_MAX_AGE)*time.Second)
+	cmd := app.srv.Rdb.Set(context.Background(), *email, *captcha, time.Duration(CAPTCHA_MAX_AGE)*time.Second)
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
@@ -54,7 +54,7 @@ func (app *App) setRedisCaptcha(email, captcha *string) error {
 }
 
 func (app *App) removeRedisCaptcha(email *string) error {
-	cmd := app.rdb.Del(context.Background(), *email)
+	cmd := app.srv.Rdb.Del(context.Background(), *email)
 	if cmd.Err() != nil {
 		return cmd.Err()
 	}
@@ -82,11 +82,11 @@ func (app *App) getSetSessionLocked(w http.ResponseWriter, r *http.Request) bool
 }
 
 func (app *App) checkCaptcha(w http.ResponseWriter, r *http.Request, capcha *model.Captcha) error {
-	err := app.validate.Struct(capcha)
+	err := app.srv.Validate.Struct(capcha)
 
 	if err != nil {
 		var errMsg string
-		for _, v := range err.(validator.ValidationErrors).Translate(*app.trans) {
+		for _, v := range err.(validator.ValidationErrors).Translate(*app.srv.Trans) {
 			errMsg += v + ","
 		}
 		return errors.New(errMsg)

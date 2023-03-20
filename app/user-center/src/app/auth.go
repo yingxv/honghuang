@@ -45,10 +45,10 @@ func (app *App) CheckPerm(perm string) func(httprouter.Handle) httprouter.Handle
 				EXIST    = 1
 			)
 
-			e, _ := app.rdb.Exists(context.Background(), k).Result()
+			e, _ := app.srv.Rdb.Exists(context.Background(), k).Result()
 
 			if e == EXIST {
-				if b, _ := app.rdb.SIsMember(context.Background(), k, perm).Result(); b {
+				if b, _ := app.srv.Rdb.SIsMember(context.Background(), k, perm).Result(); b {
 					next(w, r, ps)
 					return
 				}
@@ -104,7 +104,7 @@ func (app *App) checkUser(r *http.Request) (*string, error) {
 		return nil, err
 	}
 
-	s, err := app.rdb.Get(context.Background(), *bear).Result()
+	s, err := app.srv.Rdb.Get(context.Background(), *bear).Result()
 
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (app *App) getSetPerm(u string) ([]string, error) {
 		return nil, err
 	}
 
-	cur, err := app.mongoClient.GetColl(model.TUser).Aggregate(context.Background(), []bson.M{
+	cur, err := app.srv.Mongo.GetColl(model.TUser).Aggregate(context.Background(), []bson.M{
 		{
 			"$match": bson.M{
 				"_id": uid,
@@ -168,8 +168,8 @@ func (app *App) getSetPerm(u string) ([]string, error) {
 		return nil, err
 	}
 	k := u + ":perm"
-	app.rdb.SAdd(context.Background(), k, res[0].Roles)
-	app.rdb.Expire(context.Background(), k, time.Hour*12)
+	app.srv.Rdb.SAdd(context.Background(), k, res[0].Roles)
+	app.srv.Rdb.Expire(context.Background(), k, time.Hour*12)
 
 	return res[0].Roles, nil
 
