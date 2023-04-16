@@ -1,3 +1,13 @@
+/*
+ * @Author: fuRan NgeKaworu@gmail.com
+ * @Date: 2023-03-19 03:04:11
+ * @LastEditors: fuRan NgeKaworu@gmail.com
+ * @LastEditTime: 2023-04-16 23:08:12
+ * @FilePath: /honghuang/app/flashcard/src/model/record.go
+ * @Description:
+ *
+ * Copyright (c) 2023 by ${git_name_email}, All Rights Reserved.
+ */
 package model
 
 import (
@@ -20,4 +30,5 @@ type Record struct {
 	Translation string              `json:"translation,omitempty" bson:"translation,omitempty" validate:"required_without=ID" label:"译文"` // 译文
 	InReview    bool                `json:"inReview,omitempty" bson:"inReview" `                                                          // 是否在复习中
 	Exp         int64               `json:"exp,omitempty" bson:"exp" `                                                                    // 复习熟练度
+	Tag         string              `json:"tag" bson:"tag" `                                                                              // 标签
 }

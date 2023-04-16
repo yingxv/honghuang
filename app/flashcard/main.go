@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-20 10:38:00
+ * @LastEditTime: 2023-04-16 23:11:32
  * @FilePath: /honghuang/app/flashcard/main.go
  * @Description:
  *
@@ -40,7 +40,7 @@ func main() {
 		addr   = flag.String("l", ":8030", "绑定Host地址")
 		dbInit = flag.Bool("i", false, "init database flag")
 		mongo  = flag.String("m", "mongodb://localhost:27017", "mongod addr flag")
-		mdb    = flag.String("db", "to-do-list", "database name")
+		mdb    = flag.String("db", "flashcard", "database name")
 		ucHost = flag.String("uc", "http://user-center-go-dev", "user center host")
 		r      = flag.String("r", "localhost:6379", "rdb addr")
 	)
