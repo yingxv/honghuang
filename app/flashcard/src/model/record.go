@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-04-16 23:08:12
+ * @LastEditTime: 2023-10-31 09:42:10
  * @FilePath: /honghuang/app/flashcard/src/model/record.go
  * @Description:
  *
@@ -31,4 +31,5 @@ type Record struct {
 	InReview    bool                `json:"inReview,omitempty" bson:"inReview" `                                                          // 是否在复习中
 	Exp         int64               `json:"exp,omitempty" bson:"exp" `                                                                    // 复习熟练度
 	Tag         string              `json:"tag" bson:"tag" `                                                                              // 标签
+	Mode        int64               `json:"mode" bson:"mode" `                                                                            // 模式: 0: 关键字; 1: 全文
 }
