@@ -45,9 +45,9 @@ func main() {
 		RedisAddr: r,
 	})
 
-	mongoInit := creator.Init
+	mongoInit := creator.WithoutInit
 	if *dbInit {
-		mongoInit = creator.WithoutInit
+		mongoInit = creator.Init
 	}
 	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
 

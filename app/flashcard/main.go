@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-04-16 23:11:32
+ * @LastEditTime: 2023-11-01 13:42:00
  * @FilePath: /honghuang/app/flashcard/main.go
  * @Description:
  *
@@ -54,10 +54,11 @@ func main() {
 		RedisAddr: r,
 	})
 
-	mongoInit := creator.Init
+	mongoInit := creator.WithoutInit
 	if *dbInit {
-		mongoInit = creator.WithoutInit
+		mongoInit = creator.Init
 	}
+
 	err := srv.Mongo.Open(*mongo, *mdb, mongoInit)
 
 	if err != nil {
