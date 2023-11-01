@@ -11,7 +11,7 @@
 package app
 
 import (
-	"github.com/NgeKaworu/util/service"
+	"github.com/yingxv/honghuang/util/service"
 )
 
 // App

@@ -13,7 +13,7 @@ package model
 import (
 	"time"
 
-	"github.com/NgeKaworu/util/tool"
+	"github.com/yingxv/honghuang/util/tool"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

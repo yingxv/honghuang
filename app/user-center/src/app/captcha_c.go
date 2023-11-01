@@ -16,10 +16,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/NgeKaworu/user-center/src/model"
-	"github.com/NgeKaworu/util/tool"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
+	"github.com/yingxv/honghuang/user-center/src/model"
+	"github.com/yingxv/honghuang/util/tool"
 )
 
 func (app *App) FetchCaptcha(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {

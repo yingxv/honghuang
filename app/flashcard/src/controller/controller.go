@@ -10,7 +10,7 @@
  */
 package controller
 
-import "github.com/NgeKaworu/util/service"
+import "github.com/yingxv/honghuang/util/service"
 
 // Controller 控制器
 type Controller struct {

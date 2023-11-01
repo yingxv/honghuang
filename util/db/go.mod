@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/util/db
+module github.com/yingxv/honghuang/util/db
 
 go 1.20
 

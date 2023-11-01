@@ -10,7 +10,7 @@
  */
 package util
 
-import "github.com/NgeKaworu/util/tool"
+import "github.com/yingxv/honghuang/util/tool"
 
 const (
 	YEAR_ERR tool.Bits = 1 << iota

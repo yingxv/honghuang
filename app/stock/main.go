@@ -12,11 +12,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NgeKaworu/stock/src/app"
-	"github.com/NgeKaworu/stock/src/creator"
+	"github.com/yingxv/honghuang/stock/src/app"
+	"github.com/yingxv/honghuang/stock/src/creator"
 
-	"github.com/NgeKaworu/util/middleware"
-	"github.com/NgeKaworu/util/service"
+	"github.com/yingxv/honghuang/util/middleware"
+	"github.com/yingxv/honghuang/util/service"
 
 	"github.com/julienschmidt/httprouter"
 )

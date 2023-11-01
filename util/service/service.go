@@ -11,13 +11,13 @@
 package service
 
 import (
-	"github.com/NgeKaworu/util/db"
-	"github.com/NgeKaworu/util/service/key"
-	"github.com/NgeKaworu/util/tool"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	"github.com/go-redis/redis/v8"
 	"github.com/robfig/cron/v3"
+	"github.com/yingxv/honghuang/util/db"
+	"github.com/yingxv/honghuang/util/service/key"
+	"github.com/yingxv/honghuang/util/tool"
 	"gopkg.in/gomail.v2"
 )
 

@@ -22,13 +22,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/NgeKaworu/util/middleware"
+	"github.com/yingxv/honghuang/util/middleware"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/yingxv/flashcard-go/src/controller"
 	"github.com/yingxv/flashcard-go/src/creator"
 
-	"github.com/NgeKaworu/util/service"
+	"github.com/yingxv/honghuang/util/service"
 )
 
 func init() {

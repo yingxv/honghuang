@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/time-mgt-go
+module github.com/yingxv/honghuang/time-mgt-go
 
 go 1.20
 

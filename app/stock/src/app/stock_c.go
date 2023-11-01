@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NgeKaworu/stock/src/model"
-	"github.com/NgeKaworu/util/tool"
 	"github.com/julienschmidt/httprouter"
+	"github.com/yingxv/honghuang/stock/src/model"
+	"github.com/yingxv/honghuang/util/tool"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

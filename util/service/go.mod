@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/util/service
+module github.com/yingxv/honghuang/util/service
 
 go 1.20
 

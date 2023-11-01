@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/stock
+module github.com/yingxv/honghuang/stock
 
 go 1.20
 

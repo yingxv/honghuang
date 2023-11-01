@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/to-do-list-go
+module github.com/yingxv/honghuang/to-do-list-go
 
 go 1.20
 

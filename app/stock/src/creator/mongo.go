@@ -14,7 +14,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/NgeKaworu/stock/src/model"
+	"github.com/yingxv/honghuang/stock/src/model"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/x/bsonx"
 )

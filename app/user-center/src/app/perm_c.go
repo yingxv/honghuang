@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NgeKaworu/user-center/src/model"
-	"github.com/NgeKaworu/util/tool"
 	"github.com/hetiansu5/urlquery"
 	"github.com/julienschmidt/httprouter"
+	"github.com/yingxv/honghuang/user-center/src/model"
+	"github.com/yingxv/honghuang/util/tool"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"

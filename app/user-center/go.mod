@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/user-center
+module github.com/yingxv/honghuang/user-center
 
 go 1.20
 

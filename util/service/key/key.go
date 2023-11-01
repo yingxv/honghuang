@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-20 09:58:42
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-03-20 10:13:16
+ * @LastEditTime: 2023-11-01 13:54:30
  * @FilePath: /honghuang/util/service/key/key.go
  * @Description:
  *
@@ -11,8 +11,8 @@
 package key
 
 import (
-	"github.com/NgeKaworu/util/tool"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/yingxv/honghuang/util/tool"
 )
 
 // Auth 加解密相关

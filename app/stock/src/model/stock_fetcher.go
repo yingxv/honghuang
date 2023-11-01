@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/NgeKaworu/stock/src/util"
-	"github.com/NgeKaworu/util/tool"
+	"github.com/yingxv/honghuang/stock/src/util"
+	"github.com/yingxv/honghuang/util/tool"
 )
 
 var BOURSE_CODE_MAP = map[string]string{

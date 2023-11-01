@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NgeKaworu/user-center/src/model"
 	"github.com/julienschmidt/httprouter"
+	"github.com/yingxv/honghuang/user-center/src/model"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )

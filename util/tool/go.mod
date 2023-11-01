@@ -1,4 +1,4 @@
-module github.com/NgeKaworu/util/tool
+module github.com/yingxv/honghuang/util/tool
 
 go 1.20
 

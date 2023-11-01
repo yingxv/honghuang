@@ -10,7 +10,7 @@
  */
 package app
 
-import "github.com/NgeKaworu/util/service"
+import "github.com/yingxv/honghuang/util/service"
 
 // App
 type App struct {

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/NgeKaworu/user-center/src/model"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/yingxv/honghuang/user-center/src/model"
 	"gopkg.in/gomail.v2"
 )
 
