@@ -31,11 +31,15 @@ jobs:
         with:
           go-version: 'stable'
       - run: | 
-          go env -w GOPROXY="https://goproxy.cn" && \
-          cd app/flashcard && \
+          go env -w GOPROXY='https://goproxy.cn'
+          cd app/flashcard
           go get 
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
       - run: |
-          ls
+          go env -w GOPROXY='https://goproxy.cn'
+          cd app/stock
+          go get 
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
       
       # - name: Boot
       #   uses: appleboy/ssh-action@v0.1.8
