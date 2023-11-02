@@ -16,7 +16,7 @@ jobs:
         node-version: [15]    
     steps:
       - name: Check out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -27,20 +27,26 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
             
       - name: Build && Publish
-        run: | 
-          cd ./docker
-          sh publish.sh
-      
-      - name: Boot
-        uses: appleboy/ssh-action@v0.1.8
+        uses: actions/setup-go@v4
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOYER }}
-          password: ${{ secrets.DEPLOY_PWD }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          script: | 
-            cd honghuang/docker
-            git checkout master
-            git pull
+          go-version: 'stable'
+      - run: | 
+          go env -w GOPROXY="https://goproxy.cn" && \
+          cd app/flashcard && \
+          go get 
+      - run: |
+          ls
+      
+      # - name: Boot
+      #   uses: appleboy/ssh-action@v0.1.8
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOYER }}
+      #     password: ${{ secrets.DEPLOY_PWD }}
+      #     port: ${{ secrets.DEPLOY_PORT }}
+      #     script: | 
+      #       cd honghuang/docker
+      #       git checkout master
+      #       git pull
 
-            sh boot.sh
+      #       sh boot.sh
