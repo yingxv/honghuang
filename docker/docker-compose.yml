@@ -1,0 +1,89 @@
+version: '3.9'
+
+services:
+  user-center-go:
+    restart: "always"
+    image: ngekaworu/user-center-go
+    container_name: user-center-go
+    environment:
+      ADDR: ${ADDR:-:80}
+      DBINIT: ${DBINIT:-false}
+      MONGO: ${MONGO:?mongo url is required}
+      REDIS: ${REDIS:?redis url is required}
+      DB: ${DB:-user-center}
+      K: ${K:?iv key is required}
+      D: ${D:?email pwd is required}
+    networks:
+      - backend
+    depends_on:
+      - mongo
+      - redis
+  time-mgt-go:
+    restart: "always"
+    image: ngekaworu/time-mgt-go
+    container_name: time-mgt-go
+    environment:
+      ADDR: ${ADDR:-:80}
+      DBINIT: ${DBINIT:-false}
+      MONGO: ${MONGO:?mongo url is required}
+      REDIS: ${REDIS:?redis url is required}
+      DB: ${DB:-time-mgt}
+      UC: ${UC:-http://user-center}
+    networks:
+      - backend
+    depends_on:
+      - mongo
+      - redis
+  todo-list-go:
+    restart: "always"
+    image: ngekaworu/todo-list-go
+    container_name: todo-list-go
+    environment:
+      ADDR: ${ADDR:-:80}
+      DBINIT: ${DBINIT:-false}
+      MONGO: ${MONGO:?mongo url is required}
+      REDIS: ${REDIS:?redis url is required}
+      DB: ${DB:-todo-list}
+      UC: ${UC:-http://user-center}
+    networks:
+      - backend
+    depends_on:
+      - mongo
+      - redis
+  stock-go:
+    restart: "always"
+    image: ngekaworu/stock-go
+    container_name: stock-go
+    environment:
+      ADDR: ${ADDR:-:80}
+      DBINIT: ${DBINIT:-false}
+      MONGO: ${MONGO:?mongo url is required}
+      DB: ${DB:-stock}
+      UC: ${UC:-http://user-center}
+      REDIS: ${REDIS:?redis url is required}
+    networks:
+      - backend
+    depends_on:
+      - mongo
+      - redis
+  flashcard-go:
+    restart: "always"
+    image: ngekaworu/flashcard-go
+    container_name: flashcard-go
+    environment:
+      ADDR: ${ADDR:-:80}
+      DBINIT: ${DBINIT:-false}
+      MONGO: ${MONGO:-mongodb://mongo:27017}
+      REDIS: ${REDIS:?redis url is required}
+      DB: ${DB:-flashcard}
+      UC: ${UC:-http://user-center-go}
+    networks:
+      - backend
+    depends_on:
+      - mongo
+      - redis
+
+networks:
+  backend:
+    name: backend
+    driver: bridge
