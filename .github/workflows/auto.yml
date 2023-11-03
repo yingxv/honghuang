@@ -32,42 +32,42 @@ jobs:
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
           cd docker
-          cat publish.sh
+          sh publish.sh
       - run: | 
           cd app/stock
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
           cd docker
-          cat publish.sh
+          sh publish.sh
       - run: | 
           cd app/time-mgt
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
           cd docker
-          cat publish.sh
+          sh publish.sh
       - run: | 
           cd app/todolist
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
           cd docker
-          cat publish.sh
+          sh publish.sh
       - run: | 
           cd app/user-center
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
           cd docker
-          cat publish.sh
+          sh publish.sh
       
-      # - name: Boot
-      #   uses: appleboy/ssh-action@v0.1.8
-      #   with:
-      #     host: ${{ secrets.DEPLOY_HOST }}
-      #     username: ${{ secrets.DEPLOYER }}
-      #     password: ${{ secrets.DEPLOY_PWD }}
-      #     port: ${{ secrets.DEPLOY_PORT }}
-      #     script: | 
-      #       cd honghuang/docker
-      #       git checkout master
-      #       git pull
+      - name: Boot
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOYER }}
+          password: ${{ secrets.DEPLOY_PWD }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          script: | 
+            cd honghuang/docker
+            git checkout master
+            git pull
 
-      #       sh boot.sh
+            sh boot.sh
