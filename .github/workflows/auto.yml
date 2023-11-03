@@ -11,9 +11,6 @@ jobs:
   build:
     name: Auto CI/CD
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [15]    
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -31,15 +28,35 @@ jobs:
         with:
           go-version: 'stable'
       - run: | 
-          go env -w GOPROXY='https://goproxy.cn'
           cd app/flashcard
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
-      - run: |
-          go env -w GOPROXY='https://goproxy.cn'
+          cd docker
+          cat publish.sh
+      - run: | 
           cd app/stock
           go get 
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
+          cd docker
+          cat publish.sh
+      - run: | 
+          cd app/time-mgt
+          go get 
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
+          cd docker
+          cat publish.sh
+      - run: | 
+          cd app/todolist
+          go get 
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
+          cd docker
+          cat publish.sh
+      - run: | 
+          cd app/user-center
+          go get 
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/app
+          cd docker
+          cat publish.sh
       
       # - name: Boot
       #   uses: appleboy/ssh-action@v0.1.8
