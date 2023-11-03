@@ -92,6 +92,7 @@ func main() {
 
 	// rpc
 	router.HEAD("/check-perm-rpc/:perm", app.JWT(app.CheckPermRPC))
+	router.HEAD("/rpc/is-login-rpc", app.JWT(app.IsLoginRPC))
 
 	// captcha
 	router.GET("/captcha/fetch", app.FetchCaptcha)

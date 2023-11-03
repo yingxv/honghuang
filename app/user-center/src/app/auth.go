@@ -95,6 +95,11 @@ func (app *App) CheckPermRPC(w http.ResponseWriter, r *http.Request, ps httprout
 	w.WriteHeader(http.StatusForbidden)
 }
 
+// login rpc
+func (app *App) IsLoginRPC(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	w.Header().Set("uid", r.Header.Get("uid"))
+}
+
 // service
 
 // checkUser
