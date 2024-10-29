@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-11-01 13:42:00
+ * @LastEditTime: 2024-10-29 15:42:23
  * @FilePath: /honghuang/app/flashcard/main.go
  * @Description:
  *
@@ -71,10 +71,10 @@ func main() {
 	router.POST("/record/create", controller.RecordCreate)
 	router.DELETE("/record/remove/:id", controller.RecordRemove)
 	router.PATCH("/record/update", controller.RecordUpdate)
+	router.PATCH("/record/multi-update", controller.RecordMultiUpdate)
 	router.GET("/record/list", controller.RecordList)
 	router.PATCH("/record/review", controller.RecordReview)
 	router.GET("/record/review-all", controller.RecordReviewAll)
-	router.PATCH("/record/random-review", controller.RecordRandomReview)
 	router.PATCH("/record/set-review-result", controller.RecordSetReviewResult)
 
 	hSrv := &http.Server{Handler: srv.IsLogin(middleware.CORS(router)), ErrorLog: nil}

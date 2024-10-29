@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2023-10-31 09:42:10
+ * @LastEditTime: 2024-10-28 13:47:40
  * @FilePath: /honghuang/app/flashcard/src/model/record.go
  * @Description:
  *
@@ -25,7 +25,7 @@ type Record struct {
 	CreateAt    *time.Time          `json:"createAt,omitempty" bson:"createAt,omitempty" `                                                // 创建时间
 	UpdateAt    *time.Time          `json:"updateAt,omitempty" bson:"updateAt,omitempty" `                                                // 更新时间
 	ReviewAt    *time.Time          `json:"reviewAt,omitempty" bson:"reviewAt,omitempty" `                                                // 复习时间
-	CooldownAt  *time.Time          `json:"cooldownAt,omitempty" bson:"cooldownAt,omitempty" `                                            // 冷却时间
+	CooldownAt  *time.Time          `json:"cooldownAt" bson:"cooldownAt" `                                                                // 冷却时间
 	Source      string              `json:"source,omitempty" bson:"source,omitempty" validate:"required_without=ID" label:"原文"`           // 原文
 	Translation string              `json:"translation,omitempty" bson:"translation,omitempty" validate:"required_without=ID" label:"译文"` // 译文
 	InReview    bool                `json:"inReview,omitempty" bson:"inReview" `                                                          // 是否在复习中

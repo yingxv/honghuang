@@ -53,7 +53,6 @@ func (c *Controller) RecordCreate(w http.ResponseWriter, r *http.Request, ps htt
 	now := time.Now()
 	record.UID = &uid
 	record.CreateAt = &now
-	record.CooldownAt = &now
 
 	res, err := c.srv.Mongo.GetColl(model.TRecord).InsertOne(context.Background(), record)
 
@@ -127,7 +126,6 @@ func (c *Controller) RecordUpdate(w http.ResponseWriter, r *http.Request, ps htt
 	}
 
 	now := time.Now()
-	record.CooldownAt = &now
 	record.UpdateAt = &now
 
 	ret := c.srv.Mongo.GetColl(model.TRecord).FindOneAndUpdate(context.Background(), bson.M{
@@ -144,6 +142,73 @@ func (c *Controller) RecordUpdate(w http.ResponseWriter, r *http.Request, ps htt
 
 	tool.RetOk(w, "OK")
 }
+
+func (c *Controller) RecordMultiUpdate(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	if len(body) == 0 {
+		tool.RetFail(w, errors.New("not has body"))
+		return
+	}
+
+	record := new(struct {
+		IDs        []string            `json:"ids" validate:"required"`
+		UID        *primitive.ObjectID `json:"uid,omitempty" bson:"uid,omitempty" `               // 所有者id
+		UpdateAt   *time.Time          `json:"updateAt,omitempty" bson:"updateAt,omitempty" `     // 更新时间
+		ReviewAt   *time.Time          `json:"reviewAt,omitempty" bson:"reviewAt,omitempty" `     // 复习时间
+		CooldownAt *time.Time          `json:"cooldownAt,omitempty" bson:"cooldownAt,omitempty" ` // 冷却时间
+		Exp        int64               `json:"exp,omitempty" bson:"exp,omitempty" `               // 复习熟练度
+		Tag        string              `json:"tag,omitempty" bson:"tag,omitempty" `               // 标签
+		Mode       int64               `json:"mode,omitempty" bson:"mode,omitempty" `             // 模式: 0: 关键字; 1: 全文
+	})
+
+	err = json.Unmarshal(body, &record)
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	now := time.Now()
+	record.UpdateAt = &now
+
+	ids := make([]primitive.ObjectID, 0, len(record.IDs))
+	for _, id := range record.IDs {
+		oid, err := primitive.ObjectIDFromHex(id)
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		ids = append(ids, oid)
+	}
+
+	_, err = c.srv.Mongo.GetColl(model.TRecord).UpdateMany(context.Background(), bson.M{
+		"_id": bson.M{"$in": ids},
+		"uid": &uid,
+	}, bson.M{
+		"$set": record,
+	})
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	tool.RetOk(w, "OK")
+}
+
 func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
@@ -152,7 +217,7 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 	}
 
 	type Convertor struct {
-		Type     *string `query:"type,omitempty" validate:"omitempty,oneof=enable cooling done"`
+		Type     *string `query:"type,omitempty" validate:"omitempty,oneof=store enable cooling done"`
 		Sort     *string `query:"sort,omitempty" validate:"required_with=OrderBy"`
 		OrderBy  *int    `query:"orderby,omitempty" validate:"omitempty,oneof=1 -1,required_with=Sort"`
 		Skip     *int64  `query:"skip,omitempty" validate:"omitempty,min=0"`
@@ -184,6 +249,12 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 
 	if convertor.Type != nil {
 		switch *convertor.Type {
+		case "store":
+			{
+				filter["cooldownAt"] = nil
+				filter["exp"] = bson.M{"$ne": 100}
+				break
+			}
 		case "enable":
 			{
 				filter["cooldownAt"] = bson.M{"$lte": time.Now()}
@@ -316,88 +387,6 @@ func (c *Controller) RecordReviewAll(w http.ResponseWriter, r *http.Request, ps 
 
 }
 
-func (c *Controller) RecordRandomReview(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
-	if err != nil {
-		tool.RetFail(w, err)
-		return
-	}
-
-	body, err := io.ReadAll(r.Body)
-	defer r.Body.Close()
-
-	if err != nil {
-		tool.RetFail(w, err)
-		return
-	}
-
-	converter := struct {
-		Num *int `json:"num,omitempty"`
-	}{}
-
-	if len(body) != 0 {
-		if err := json.Unmarshal(body, &converter); err != nil {
-			tool.RetFail(w, err)
-			return
-		}
-	}
-
-	t := c.srv.Mongo.GetColl(model.TRecord)
-
-	if converter.Num == nil {
-		num := 3
-		converter.Num = &num
-	}
-
-	cursor, err := t.Aggregate(context.Background(), []bson.M{
-		{
-			"$match": bson.M{
-				"uid":        uid,
-				"inReview":   false,
-				"cooldownAt": bson.M{"$lte": time.Now()},
-			},
-		},
-		{
-			"$sample": bson.M{"size": converter.Num},
-		},
-		{
-			"$project": bson.M{"_id": 1},
-		},
-	})
-
-	if err != nil {
-		tool.RetFail(w, err)
-		return
-	}
-
-	random := make([]model.Record, 0)
-	err = cursor.All(context.Background(), &random)
-	if err != nil {
-		tool.RetFail(w, err)
-		return
-	}
-	ids := make([]primitive.ObjectID, 0)
-	for _, record := range random {
-		ids = append(ids, *record.ID)
-	}
-
-	filter := bson.M{
-		"uid": uid,
-		"_id": bson.M{"$in": ids},
-	}
-
-	res, err := t.UpdateMany(context.Background(), filter, bson.M{
-		"$set": bson.M{"inReview": true},
-	})
-
-	if err != nil {
-		tool.RetFail(w, err)
-		return
-	}
-
-	tool.RetOk(w, res)
-
-}
 func (c *Controller) RecordSetReviewResult(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {

@@ -1,0 +1,13 @@
+{{+
+  exports.defaultHeaders = {
+    'Authorization': `Bearer ${token}`,
+  };
+}}
+
+###
+
+GET http://localhost:8030/
+...defaultHeaders
+
+HEAD https://api.furan.xyz/rpc/is-login-rpc
+...defaultHeaders
