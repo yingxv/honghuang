@@ -310,6 +310,203 @@ func (c *Controller) RecordList(w http.ResponseWriter, r *http.Request, ps httpr
 	}
 	tool.RetOkWithTotal(w, res, count)
 }
+
+func (c *Controller) RecordMgtList(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	type Convertor struct {
+		Sort    *string `query:"sort,omitempty" validate:"required_with=OrderBy"`
+		OrderBy *int    `query:"orderby,omitempty" validate:"omitempty,oneof=1 -1,required_with=Sort"`
+		Skip    *int64  `query:"skip,omitempty" validate:"omitempty,min=0"`
+		Limit   *int64  `query:"limit,omitempty" validate:"omitempty,min=0"`
+
+		CooldownAt  *[]string `query:"cooldownAt,omitempty"`
+		CreateAt    *[]string `query:"createAt,omitempty"`
+		ReviewAt    *[]string `query:"reviewAt,omitempty"`
+		UpdateAt    *[]string `query:"updateAt,omitempty"`
+		Exp         *int64    `query:"exp,omitempty"`
+		InReview    *bool     `query:"inReview,omitempty"`
+		Source      *string   `query:"source,omitempty"`
+		Translation *string   `query:"translation,omitempty"`
+		Tag         *string   `query:"tag,omitempty"`
+		Mode        *int64    `query:"mode,omitempty"`
+		Finished    bool      `query:"finished"`
+		Planing     bool      `query:"planing"`
+	}
+
+	convertor := new(Convertor)
+
+	err = urlquery.Unmarshal([]byte(r.URL.RawQuery), &convertor)
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	err = c.srv.Validate.Struct(convertor)
+	if err != nil {
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
+		return
+	}
+
+	filter := bson.M{
+		"uid": uid,
+	}
+
+	if convertor.Planing {
+		filter["cooldownAt"] = bson.M{"$ne": nil}
+	} else {
+		filter["cooldownAt"] = nil
+	}
+
+	if convertor.CooldownAt != nil {
+		startTime, err := time.Parse(time.RFC1123, (*convertor.CooldownAt)[0])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		endTime, err := time.Parse(time.RFC1123, (*convertor.CooldownAt)[1])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+
+		filter["cooldownAt"] = bson.M{
+			"$gte": startTime,
+			"$lte": endTime,
+		}
+	}
+
+	if convertor.CreateAt != nil {
+		startTime, err := time.Parse(time.RFC1123, (*convertor.CreateAt)[0])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		endTime, err := time.Parse(time.RFC1123, (*convertor.CreateAt)[1])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		filter["createAt"] = bson.M{
+			"$gte": startTime,
+			"$lte": endTime,
+		}
+	}
+
+	if convertor.ReviewAt != nil {
+		startTime, err := time.Parse(time.RFC1123, (*convertor.ReviewAt)[0])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		endTime, err := time.Parse(time.RFC1123, (*convertor.ReviewAt)[1])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		filter["reviewAt"] = bson.M{
+			"$gte": startTime,
+			"$lte": endTime,
+		}
+	}
+
+	if convertor.UpdateAt != nil {
+		startTime, err := time.Parse(time.RFC1123, (*convertor.UpdateAt)[0])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		endTime, err := time.Parse(time.RFC1123, (*convertor.UpdateAt)[1])
+		if err != nil {
+			tool.RetFail(w, err)
+			return
+		}
+		filter["updateAt"] = bson.M{
+			"$gte": startTime,
+			"$lte": endTime,
+		}
+	}
+
+	filter["exp"] = bson.M{"$ne": 100}
+	if convertor.Finished {
+		filter["exp"] = 100
+	}
+
+	if convertor.Exp != nil {
+		filter["exp"] = convertor.Exp
+	}
+
+	if convertor.InReview != nil {
+		filter["inReview"] = convertor.InReview
+	}
+
+	if convertor.Source != nil {
+		filter["source"] = bson.M{
+			"$regex":   *convertor.Source,
+			"$options": "i", // "i" 表示不区分大小写
+		}
+	}
+
+	if convertor.Translation != nil {
+		filter["translation"] = bson.M{
+			"$regex":   *convertor.Translation,
+			"$options": "i", // "i" 表示不区分大小写
+		}
+	}
+
+	if convertor.Tag != nil {
+		filter["tag"] = bson.M{
+			"$regex":   *convertor.Tag,
+			"$options": "i", // "i" 表示不区分大小写
+		}
+	}
+
+	if convertor.Mode != nil {
+		filter["mode"] = convertor.Mode
+	}
+
+	opt := options.FindOptions{
+		Skip:  convertor.Skip,
+		Limit: convertor.Limit,
+	}
+
+	if opt.Limit == nil {
+		opt.SetLimit(10)
+	}
+
+	if convertor.Sort != nil && convertor.OrderBy != nil {
+		opt.SetSort(bson.D{
+			{Key: *convertor.Sort, Value: *convertor.OrderBy},
+		})
+	}
+
+	t := c.srv.Mongo.GetColl(model.TRecord)
+	cursor, err := t.Find(context.Background(), filter, &opt)
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	res := make([]map[string]interface{}, 0)
+
+	err = cursor.All(context.Background(), &res)
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	count, err := t.CountDocuments(context.Background(), filter)
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+	tool.RetOkWithTotal(w, res, count)
+}
+
 func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {
@@ -358,6 +555,105 @@ func (c *Controller) RecordReview(w http.ResponseWriter, r *http.Request, ps htt
 	tool.RetOk(w, res)
 
 }
+
+func (c *Controller) RecordReviewStop(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	if len(body) == 0 {
+		tool.RetFail(w, errors.New("not has body"))
+		return
+	}
+
+	converter := struct {
+		IDs *[]*primitive.ObjectID `json:"ids,omitempty" bson:"ids" validate:"required"`
+	}{}
+
+	if err := json.Unmarshal(body, &converter); err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	if err := c.srv.Validate.Struct(converter); err != nil {
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
+		return
+	}
+
+	filter := bson.M{
+		"uid": uid,
+		"_id": bson.M{"$in": converter.IDs},
+	}
+	res, err := c.srv.Mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{"$set": bson.M{"inReview": false}})
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	tool.RetOk(w, res)
+
+}
+
+func (c *Controller) RecordReviewCooldownAtClear(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	defer r.Body.Close()
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	if len(body) == 0 {
+		tool.RetFail(w, errors.New("not has body"))
+		return
+	}
+
+	converter := struct {
+		IDs *[]*primitive.ObjectID `json:"ids,omitempty" bson:"ids" validate:"required"`
+	}{}
+
+	if err := json.Unmarshal(body, &converter); err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	if err := c.srv.Validate.Struct(converter); err != nil {
+		tool.RetFailWithTrans(w, err, c.srv.Trans)
+		return
+	}
+
+	filter := bson.M{
+		"uid": uid,
+		"_id": bson.M{"$in": converter.IDs},
+	}
+	res, err := c.srv.Mongo.GetColl(model.TRecord).UpdateMany(context.Background(), filter, bson.M{"$set": bson.M{"cooldownAt": nil}})
+
+	if err != nil {
+		tool.RetFail(w, err)
+		return
+	}
+
+	tool.RetOk(w, res)
+
+}
+
 func (c *Controller) RecordReviewAll(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	uid, err := primitive.ObjectIDFromHex(r.Header.Get("uid"))
 	if err != nil {

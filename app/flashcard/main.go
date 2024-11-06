@@ -2,7 +2,7 @@
  * @Author: fuRan NgeKaworu@gmail.com
  * @Date: 2023-03-19 03:04:11
  * @LastEditors: fuRan NgeKaworu@gmail.com
- * @LastEditTime: 2024-10-29 15:42:23
+ * @LastEditTime: 2024-11-06 15:49:23
  * @FilePath: /honghuang/app/flashcard/main.go
  * @Description:
  *
@@ -73,7 +73,10 @@ func main() {
 	router.PATCH("/record/update", controller.RecordUpdate)
 	router.PATCH("/record/multi-update", controller.RecordMultiUpdate)
 	router.GET("/record/list", controller.RecordList)
+	router.GET("/record/mgt/list", controller.RecordMgtList)
 	router.PATCH("/record/review", controller.RecordReview)
+	router.PATCH("/record/review/stop", controller.RecordReviewStop)
+	router.PATCH("/record/cooldownAt/clear", controller.RecordReviewCooldownAtClear)
 	router.GET("/record/review-all", controller.RecordReviewAll)
 	router.PATCH("/record/set-review-result", controller.RecordSetReviewResult)
 

@@ -9,5 +9,8 @@
 GET http://localhost:8030/
 ...defaultHeaders
 
-HEAD https://api.furan.xyz/rpc/is-login-rpc
+HEAD https://api.furan.xyz/user-center/rpc/is-login-rpc
+...defaultHeaders
+
+HEAD https://furan.xyz/api/user-center/rpc/is-login-rpc
 ...defaultHeaders
